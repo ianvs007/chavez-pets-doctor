@@ -98,9 +98,14 @@ function renderShell({ title, active }) {
 
   document.body.innerHTML = `
     <div class="app-shell">
-      <aside class="sidebar">
-        <div class="brand">Patitas al poder<small>Veterinaria · Bolivia</small></div>
-        <nav class="nav">
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+          <div class="brand">Patitas al poder<small>Veterinaria · Bolivia</small></div>
+          <button type="button" class="nav-toggle" id="navToggle" aria-label="Abrir menú" aria-expanded="false" aria-controls="mainNav">
+            <span class="nav-toggle-bars" aria-hidden="true"></span>
+          </button>
+        </div>
+        <nav class="nav" id="mainNav">
           ${links
             .map(
               ([href, label, key]) =>
@@ -125,6 +130,19 @@ function renderShell({ title, active }) {
       </main>
     </div>
   `;
+
+  const sidebar = document.getElementById('sidebar');
+  const navToggle = document.getElementById('navToggle');
+  const setNavOpen = (open) => {
+    sidebar.classList.toggle('nav-open', open);
+    navToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    navToggle.setAttribute('aria-label', open ? 'Cerrar menú' : 'Abrir menú');
+  };
+  navToggle.onclick = () => setNavOpen(!sidebar.classList.contains('nav-open'));
+  sidebar.querySelectorAll('.nav a').forEach((a) => {
+    a.addEventListener('click', () => setNavOpen(false));
+  });
+
   document.getElementById('btnLogout').onclick = async () => {
     try {
       await API.request('/api/auth/logout', { method: 'POST' });

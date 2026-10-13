@@ -16,6 +16,7 @@
     async function load() {
       const rows = await API.request('/api/ventas?estado=pendiente_verificacion&metodo=qr');
       document.getElementById('lista').innerHTML = `
+        <div class="table-scroll">
         <table>
           <thead><tr><th>Venta</th><th>Cliente</th><th>Monto</th><th>Comprobante</th><th>Acciones</th></tr></thead>
           <tbody>
@@ -33,7 +34,8 @@
                 </td>
               </tr>`).join('') || '<tr><td colspan="5">No hay pagos pendientes</td></tr>'}
           </tbody>
-        </table>`;
+        </table>
+        </div>`;
 
       document.querySelectorAll('[data-ok]').forEach((btn) => {
         btn.onclick = async () => {

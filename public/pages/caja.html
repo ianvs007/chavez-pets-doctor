@@ -21,9 +21,9 @@
           <h2>Nueva venta</h2>
           <div class="form-row"><label>Cliente</label><select id="cliente"></select></div>
           <div class="form-row"><label>Agregar servicio</label>
-            <div class="form-actions" style="margin:0">
-              <select id="servicio" style="flex:1"></select>
-              <input id="precioOverride" type="number" step="0.01" style="width:110px" title="Precio del día" />
+            <div class="form-inline">
+              <select id="servicio" class="grow"></select>
+              <input id="precioOverride" class="price-input" type="number" step="0.01" title="Precio del día" />
               <button class="btn secondary" type="button" id="addLine">Añadir</button>
             </div>
           </div>
@@ -81,6 +81,7 @@
 
     function renderLineas() {
       document.getElementById('lineas').innerHTML = `
+        <div class="table-scroll">
         <table>
           <thead><tr><th>Detalle</th><th>Precio</th><th></th></tr></thead>
           <tbody>
@@ -91,7 +92,8 @@
                 <td><button class="btn secondary" data-rm="${i}">Quitar</button></td>
               </tr>`).join('') || '<tr><td colspan="3">Sin líneas</td></tr>'}
           </tbody>
-        </table>`;
+        </table>
+        </div>`;
       document.querySelectorAll('[data-rm]').forEach((btn) => {
         btn.onclick = () => {
           lineas.splice(Number(btn.dataset.rm), 1);
@@ -105,6 +107,7 @@
     async function loadVentas() {
       const rows = await API.request('/api/ventas');
       document.getElementById('ventas').innerHTML = `
+        <div class="table-scroll">
         <table>
           <thead><tr><th>ID</th><th>Cliente</th><th>Total</th><th>Estado</th><th></th></tr></thead>
           <tbody>
@@ -117,7 +120,8 @@
                 <td>${v.estado_pago === 'pagado' ? `<a href="/pages/recibo.html?id=${v.id}">Recibo</a>` : '—'}</td>
               </tr>`).join('') || '<tr><td colspan="5">Sin ventas</td></tr>'}
           </tbody>
-        </table>`;
+        </table>
+        </div>`;
     }
 
     document.getElementById('metodo').onchange = () => {

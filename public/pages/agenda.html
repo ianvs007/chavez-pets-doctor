@@ -95,6 +95,7 @@
       if (estado) url += `&estado=${estado}`;
       const rows = await API.request(url);
       document.getElementById('lista').innerHTML = `
+        <div class="table-scroll">
         <table>
           <thead><tr><th>Hora</th><th>Paciente</th><th>Tipo</th><th>Estado</th><th></th></tr></thead>
           <tbody>
@@ -112,7 +113,8 @@
                 <td><button class="btn secondary" data-save="${c.id}">Actualizar</button></td>
               </tr>`).join('') || '<tr><td colspan="5">Sin citas</td></tr>'}
           </tbody>
-        </table>`;
+        </table>
+        </div>`;
       document.querySelectorAll('[data-save]').forEach((btn) => {
         btn.onclick = async () => {
           const id = btn.dataset.save;

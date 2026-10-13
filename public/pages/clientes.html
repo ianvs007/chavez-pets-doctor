@@ -70,6 +70,7 @@
       const q = document.getElementById('qCliente').value.trim();
       clientes = await API.request('/api/clientes' + (q ? `?q=${encodeURIComponent(q)}` : ''));
       document.getElementById('listaClientes').innerHTML = `
+        <div class="table-scroll">
         <table>
           <thead><tr><th>Nombre</th><th>Tel</th><th></th></tr></thead>
           <tbody>
@@ -83,7 +84,8 @@
                 </td>
               </tr>`).join('') || '<tr><td colspan="3">Sin resultados</td></tr>'}
           </tbody>
-        </table>`;
+        </table>
+        </div>`;
       const sel = document.getElementById('pacienteCliente');
       sel.innerHTML = clientes.map((c) => `<option value="${c.id}">${c.nombres} ${c.apellidos}</option>`).join('');
       if (selectedClienteId) sel.value = selectedClienteId;
@@ -111,6 +113,7 @@
       document.getElementById('pacienteCliente').value = clienteId;
       const rows = await API.request(`/api/pacientes?cliente_id=${clienteId}`);
       document.getElementById('listaPacientes').innerHTML = `
+        <div class="table-scroll">
         <table>
           <thead><tr><th>Nombre</th><th>Especie</th><th>Sexo</th><th>Peso</th></tr></thead>
           <tbody>
@@ -122,7 +125,8 @@
                 <td>${p.peso_kg ?? '—'}</td>
               </tr>`).join('') || '<tr><td colspan="4">Sin pacientes</td></tr>'}
           </tbody>
-        </table>`;
+        </table>
+        </div>`;
     }
 
     document.getElementById('qCliente').addEventListener('input', () => loadClientes().catch(console.error));

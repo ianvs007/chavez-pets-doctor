@@ -36,6 +36,7 @@
           <div class="stat"><span class="muted">Pendientes QR</span><strong>${data.pendientes.n} (${money(data.pendientes.monto)})</strong></div>
         </div>
         <h2>Detalle del día</h2>
+        <div class="table-scroll">
         <table>
           <thead><tr><th>Hora</th><th>Recibo</th><th>Cliente</th><th>Método</th><th>Estado</th><th>Total</th></tr></thead>
           <tbody>
@@ -49,7 +50,8 @@
                 <td>${money(v.total)}</td>
               </tr>`).join('') || '<tr><td colspan="6">Sin movimientos</td></tr>'}
           </tbody>
-        </table>`;
+        </table>
+        </div>`;
     }
 
     document.getElementById('btn').onclick = () => load().catch(alert);
