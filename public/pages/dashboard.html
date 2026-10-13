@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard · Chavez Pet's Doctor</title>
+  <link rel="stylesheet" href="/css/app.css" />
+</head>
+<body>
+  <script src="/js/api.js"></script>
+  <script>
+    renderShell({ title: 'Dashboard', active: 'dashboard' });
+    const page = document.getElementById('page');
+    page.innerHTML = `<div class="panel"><p class="muted">Cargando…</p></div>`;
+
+    (async () => {
+      try {
+        const today = new Date().toISOString().slice(0, 10);
+        const [citas, pendientes, arqueo] = await Promise.all([
+          API.request(`/api/citas?fecha=${today}`),
+          API.request('/api/ventas?estado=pendiente_verificacion'),
+          API.request(`/api/ventas/arqueo?fecha=${today}`),
+        ]);
+        page.innerHTML = `
+          <div class="stats" style="margin-bottom:1rem">
+            <div class="stat"><span class="muted">Citas hoy</span><strong>${citas.length}</strong></div>
+            <div class="stat"><span class="muted">QR por verificar</span><strong>${pendientes.length}</strong></div>
+            <div class="stat"><span class="muted">Cobrado hoy</span><strong>${money(arqueo.totales_pagados.total_pagado)}</strong></div>
+            <div class="stat"><span class="muted">Tickets pagados</span><strong>${arqueo.totales_pagados.tickets}</strong></div>
+          </div>
+          <div class="grid grid-2">
+            <div class="panel">
+              <h2>Agenda de hoy</h2>
+              <table>
+                <thead><tr><th>Hora</th><th>Paciente</th><th>Tipo</th><th>Estado</th></tr></thead>
+                <tbody>
+                  ${citas.map((c) => `
+                    <tr>
+                      <td>${fmtDateTime(c.fecha_hora).slice(11)}</td>
+                      <td>${c.paciente_nombre}<div class="muted">${c.cliente_nombre}</div></td>
+                      <td>${c.tipo}</td>
+                      <td>${c.estado}</td>
+                    </tr>`).join('') || '<tr><td colspan="4">Sin citas</td></tr>'}
+                </tbody>
+              </table>
+            </div>
+            <div class="panel">
+              <h2>Accesos rápidos</h2>
+              <div class="form-actions">
+                <a class="btn" href="/pages/caja.html">Abrir caja</a>
+                <a class="btn secondary" href="/pages/verificacion.html">Verificar QR</a>
+                <a class="btn secondary" href="/pages/clientes.html">Clientes</a>
+                <a class="btn secondary" href="/pages/servicios.html">Precios</a>
+              </div>
+              <p class="muted" style="margin-top:1rem">Clínica: Chavez Pet's Doctor Veterinaria</p>
+            </div>
+          </div>
+        `;
+      } catch (err) {
+        page.innerHTML = `<div class="alert error">${err.message}</div>`;
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Agenda · Chavez Pet's Doctor</title>
+  <link rel="stylesheet" href="/css/app.css" />
+</head>
+<body>
+  <script src="/js/api.js"></script>
+  <script>
+    renderShell({ title: 'Agenda de citas', active: 'agenda' });
+    const page = document.getElementById('page');
+    const today = new Date().toISOString().slice(0, 10);
+
+    page.innerHTML = `
+      <div class="grid grid-2">
+        <div class="panel">
+          <div class="form-actions" style="margin-top:0">
+            <div class="form-row" style="flex:1;margin:0">
+              <label>Fecha</label>
+              <input type="date" id="fecha" value="${today}" />
+            </div>
+            <div class="form-row" style="flex:1;margin:0">
+              <label>Estado</label>
+              <select id="estadoFiltro">
+                <option value="">Todos</option>
+                <option>programada</option>
+                <option>confirmada</option>
+                <option>en_curso</option>
+                <option>completada</option>
+                <option>cancelada</option>
+                <option>no_asistio</option>
+              </select>
+            </div>
+            <button class="btn secondary" id="btnFiltrar" style="align-self:end">Filtrar</button>
+          </div>
+          <div id="lista" style="margin-top:1rem"></div>
+        </div>
+        <div class="panel">
+          <h2>Nueva cita</h2>
+          <form id="formCita">
+            <div class="form-row"><label>Cliente</label><select id="cliente" required></select></div>
+            <div class="form-row"><label>Paciente</label><select id="paciente" required></select></div>
+            <div class="form-row"><label>Fecha y hora</label><input id="fechaHora" type="datetime-local" required /></div>
+            <div class="form-row"><label>Tipo</label>
+              <select id="tipo">
+                <option value="consulta">consulta</option>
+                <option value="vacuna">vacuna</option>
+                <option value="cirugia">cirugia</option>
+                <option value="control_puntos">control_puntos</option>
+                <option value="otro">otro</option>
+              </select>
+            </div>
+            <div class="form-row"><label>Motivo</label><input id="motivo" /></div>
+            <div class="form-row"><label>Estado</label>
+              <select id="estado">
+                <option>programada</option>
+                <option>confirmada</option>
+                <option>en_curso</option>
+                <option>completada</option>
+                <option>cancelada</option>
+                <option>no_asistio</option>
+              </select>
+            </div>
+            <div class="form-actions"><button class="btn" type="submit">Crear cita</button></div>
+          </form>
+          <div id="msg"></div>
+        </div>
+      </div>
+    `;
+
+    let pacientes = [];
+
+    async function loadClientes() {
+      const clientes = await API.request('/api/clientes');
+      document.getElementById('cliente').innerHTML = clientes
+        .map((c) => `<option value="${c.id}">${c.nombres} ${c.apellidos}</option>`)
+        .join('');
+      await loadPacientes();
+    }
+
+    async function loadPacientes() {
+      const clienteId = document.getElementById('cliente').value;
+      pacientes = await API.request(`/api/pacientes?cliente_id=${clienteId}`);
+      document.getElementById('paciente').innerHTML = pacientes
+        .map((p) => `<option value="${p.id}">${p.nombre} (${p.especie})</option>`)
+        .join('');
+    }
+
+    async function loadCitas() {
+      const fecha = document.getElementById('fecha').value;
+      const estado = document.getElementById('estadoFiltro').value;
+      let url = `/api/citas?fecha=${fecha}`;
+      if (estado) url += `&estado=${estado}`;
+      const rows = await API.request(url);
+      document.getElementById('lista').innerHTML = `
+        <table>
+          <thead><tr><th>Hora</th><th>Paciente</th><th>Tipo</th><th>Estado</th><th></th></tr></thead>
+          <tbody>
+            ${rows.map((c) => `
+              <tr>
+                <td>${fmtDateTime(c.fecha_hora)}</td>
+                <td>${c.paciente_nombre}<div class="muted">${c.cliente_nombre}</div><div class="muted">${c.motivo || ''}</div></td>
+                <td>${c.tipo}</td>
+                <td>
+                  <select data-estado="${c.id}">
+                    ${['programada','confirmada','en_curso','completada','cancelada','no_asistio']
+                      .map((s) => `<option value="${s}" ${s === c.estado ? 'selected' : ''}>${s}</option>`).join('')}
+                  </select>
+                </td>
+                <td><button class="btn secondary" data-save="${c.id}">Actualizar</button></td>
+              </tr>`).join('') || '<tr><td colspan="5">Sin citas</td></tr>'}
+          </tbody>
+        </table>`;
+      document.querySelectorAll('[data-save]').forEach((btn) => {
+        btn.onclick = async () => {
+          const id = btn.dataset.save;
+          const estado = document.querySelector(`[data-estado="${id}"]`).value;
+          await API.request(`/api/citas/${id}`, { method: 'PUT', body: { estado } });
+          await loadCitas();
+        };
+      });
+    }
+
+    document.getElementById('cliente').onchange = () => loadPacientes();
+    document.getElementById('btnFiltrar').onclick = () => loadCitas().catch(alert);
+    document.getElementById('formCita').onsubmit = async (e) => {
+      e.preventDefault();
+      try {
+        const raw = document.getElementById('fechaHora').value;
+        await API.request('/api/citas', {
+          method: 'POST',
+          body: {
+            cliente_id: Number(document.getElementById('cliente').value),
+            paciente_id: Number(document.getElementById('paciente').value),
+            fecha_hora: raw.replace('T', ' ') + ':00',
+            tipo: document.getElementById('tipo').value,
+            motivo: document.getElementById('motivo').value,
+            estado: document.getElementById('estado').value,
+            veterinario_id: (API.getUser() || {}).id,
+          },
+        });
+        document.getElementById('msg').innerHTML = '<div class="alert ok">Cita creada</div>';
+        await loadCitas();
+      } catch (err) {
+        document.getElementById('msg').innerHTML = `<div class="alert error">${err.message}</div>`;
+      }
+    };
+
+    (async () => {
+      await loadClientes();
+      await loadCitas();
+    })().catch((err) => {
+      document.getElementById('lista').innerHTML = `<div class="alert error">${err.message}</div>`;
+    });
+  </script>
+</body>
+</html>

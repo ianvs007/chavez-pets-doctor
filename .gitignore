@@ -1,0 +1,8 @@
+node_modules/
+uploads/qr-clinica/*
+uploads/comprobantes-pago/*
+!uploads/qr-clinica/.gitkeep
+!uploads/comprobantes-pago/.gitkeep
+.env
+*.log
+.DS_Store

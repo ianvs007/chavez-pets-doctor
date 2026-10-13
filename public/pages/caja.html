@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Caja · Chavez Pet's Doctor</title>
+  <link rel="stylesheet" href="/css/app.css" />
+</head>
+<body>
+  <script src="/js/api.js"></script>
+  <script>
+    renderShell({ title: 'Caja / cobro', active: 'caja' });
+    const page = document.getElementById('page');
+    let servicios = [];
+    let lineas = [];
+    let config = null;
+
+    page.innerHTML = `
+      <div class="grid grid-2">
+        <div class="panel">
+          <h2>Nueva venta</h2>
+          <div class="form-row"><label>Cliente</label><select id="cliente"></select></div>
+          <div class="form-row"><label>Agregar servicio</label>
+            <div class="form-actions" style="margin:0">
+              <select id="servicio" style="flex:1"></select>
+              <input id="precioOverride" type="number" step="0.01" style="width:110px" title="Precio del día" />
+              <button class="btn secondary" type="button" id="addLine">Añadir</button>
+            </div>
+          </div>
+          <div id="lineas"></div>
+          <div class="form-row"><label>Descuento (Bs)</label><input id="descuento" type="number" step="0.01" value="0" /></div>
+          <div class="form-row"><strong>Total: <span id="total">Bs 0.00</span></strong></div>
+          <div class="form-row"><label>Método</label>
+            <select id="metodo"><option value="efectivo">Efectivo</option><option value="qr">QR</option></select>
+          </div>
+          <div id="efectivoBox">
+            <div class="form-row"><label>Monto recibido</label><input id="recibido" type="number" step="0.01" /></div>
+            <div class="muted">Vuelto: <span id="vuelto">Bs 0.00</span></div>
+          </div>
+          <div id="qrBox" style="display:none">
+            <div class="form-row"><label>Referencia / banco origen</label>
+              <input id="referencia" placeholder="Referencia" />
+              <input id="banco" placeholder="Banco origen" style="margin-top:0.4rem" />
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn" id="cobrar">Cobrar</button>
+          </div>
+          <div id="msg"></div>
+        </div>
+        <div class="panel">
+          <h2>Últimas ventas</h2>
+          <div id="ventas"></div>
+        </div>
+      </div>
+      <div class="modal-backdrop" id="qrModal">
+        <div class="modal">
+          <h2>Pago QR</h2>
+          <p class="muted">Muestre el QR de la clínica, reciba el pago y suba el comprobante.</p>
+          <img id="qrImg" class="qr-preview" alt="QR clínica" />
+          <p id="qrInfo" class="muted"></p>
+          <div class="form-row"><label>Comprobante</label><input type="file" id="compFile" accept="image/*,application/pdf" /></div>
+          <div class="form-actions">
+            <button class="btn" id="subirComp">Subir comprobante</button>
+            <button class="btn secondary" id="cerrarModal">Cerrar</button>
+          </div>
+          <div id="modalMsg"></div>
+        </div>
+      </div>
+    `;
+
+    function recalc() {
+      const desc = Number(document.getElementById('descuento').value || 0);
+      const sub = lineas.reduce((s, l) => s + l.cantidad * l.precio_unitario, 0);
+      const total = Math.max(0, sub - desc);
+      document.getElementById('total').textContent = money(total);
+      const rec = Number(document.getElementById('recibido').value || 0);
+      document.getElementById('vuelto').textContent = money(Math.max(0, rec - total));
+      return total;
+    }
+
+    function renderLineas() {
+      document.getElementById('lineas').innerHTML = `
+        <table>
+          <thead><tr><th>Detalle</th><th>Precio</th><th></th></tr></thead>
+          <tbody>
+            ${lineas.map((l, i) => `
+              <tr>
+                <td>${l.descripcion}</td>
+                <td>${money(l.precio_unitario)}</td>
+                <td><button class="btn secondary" data-rm="${i}">Quitar</button></td>
+              </tr>`).join('') || '<tr><td colspan="3">Sin líneas</td></tr>'}
+          </tbody>
+        </table>`;
+      document.querySelectorAll('[data-rm]').forEach((btn) => {
+        btn.onclick = () => {
+          lineas.splice(Number(btn.dataset.rm), 1);
+          renderLineas();
+          recalc();
+        };
+      });
+      recalc();
+    }
+
+    async function loadVentas() {
+      const rows = await API.request('/api/ventas');
+      document.getElementById('ventas').innerHTML = `
+        <table>
+          <thead><tr><th>ID</th><th>Cliente</th><th>Total</th><th>Estado</th><th></th></tr></thead>
+          <tbody>
+            ${rows.slice(0, 12).map((v) => `
+              <tr>
+                <td>#${v.id}</td>
+                <td>${v.cliente_nombre}<div class="muted">${v.metodo_pago}</div></td>
+                <td>${money(v.total)}</td>
+                <td>${badgePago(v.estado_pago)}</td>
+                <td>${v.estado_pago === 'pagado' ? `<a href="/pages/recibo.html?id=${v.id}">Recibo</a>` : '—'}</td>
+              </tr>`).join('') || '<tr><td colspan="5">Sin ventas</td></tr>'}
+          </tbody>
+        </table>`;
+    }
+
+    document.getElementById('metodo').onchange = () => {
+      const qr = document.getElementById('metodo').value === 'qr';
+      document.getElementById('qrBox').style.display = qr ? 'block' : 'none';
+      document.getElementById('efectivoBox').style.display = qr ? 'none' : 'block';
+    };
+    document.getElementById('descuento').oninput = recalc;
+    document.getElementById('recibido').oninput = recalc;
+    document.getElementById('servicio').onchange = () => {
+      const s = servicios.find((x) => String(x.id) === document.getElementById('servicio').value);
+      if (s) document.getElementById('precioOverride').value = s.precio_bob;
+    };
+    document.getElementById('addLine').onclick = () => {
+      const s = servicios.find((x) => String(x.id) === document.getElementById('servicio').value);
+      if (!s) return;
+      const precio = Number(document.getElementById('precioOverride').value || s.precio_bob);
+      lineas.push({
+        servicio_id: s.id,
+        descripcion: s.nombre,
+        cantidad: 1,
+        precio_unitario: precio,
+      });
+      renderLineas();
+    };
+
+    let pendingQrId = null;
+    document.getElementById('cerrarModal').onclick = () => {
+      document.getElementById('qrModal').classList.remove('open');
+    };
+    document.getElementById('subirComp').onclick = async () => {
+      const file = document.getElementById('compFile').files[0];
+      if (!file || !pendingQrId) return;
+      const fd = new FormData();
+      fd.append('comprobante', file);
+      fd.append('referencia_pago', document.getElementById('referencia').value);
+      fd.append('banco_origen', document.getElementById('banco').value);
+      try {
+        await API.request(`/api/ventas/${pendingQrId}/comprobante`, { method: 'POST', body: fd });
+        document.getElementById('modalMsg').innerHTML = '<div class="alert ok">Comprobante enviado. Pendiente de verificación.</div>';
+        await loadVentas();
+      } catch (err) {
+        document.getElementById('modalMsg').innerHTML = `<div class="alert error">${err.message}</div>`;
+      }
+    };
+
+    document.getElementById('cobrar').onclick = async () => {
+      const total = recalc();
+      if (!lineas.length) {
+        document.getElementById('msg').innerHTML = '<div class="alert error">Agregue al menos un servicio</div>';
+        return;
+      }
+      const body = {
+        cliente_id: Number(document.getElementById('cliente').value),
+        items: lineas,
+        descuento: Number(document.getElementById('descuento').value || 0),
+      };
+      try {
+        if (document.getElementById('metodo').value === 'efectivo') {
+          body.monto_recibido = Number(document.getElementById('recibido').value || 0);
+          const venta = await API.request('/api/ventas/efectivo', { method: 'POST', body });
+          document.getElementById('msg').innerHTML = `<div class="alert ok">Pagado. <a href="/pages/recibo.html?id=${venta.id}">Imprimir recibo 80mm</a></div>`;
+          lineas = [];
+          renderLineas();
+          await loadVentas();
+        } else {
+          body.referencia_pago = document.getElementById('referencia').value;
+          body.banco_origen = document.getElementById('banco').value;
+          const venta = await API.request('/api/ventas/qr', { method: 'POST', body });
+          pendingQrId = venta.id;
+          document.getElementById('qrImg').src = config?.qr_cobro_path || '';
+          document.getElementById('qrImg').style.display = config?.qr_cobro_path ? 'block' : 'none';
+          document.getElementById('qrInfo').textContent = [
+            config?.banco_nombre || '',
+            config?.cuenta_info || 'Configure el QR en Configuración (veterinario)',
+            `Venta #${venta.id} · ${money(total)}`,
+          ].filter(Boolean).join(' · ');
+          document.getElementById('modalMsg').innerHTML = '';
+          document.getElementById('qrModal').classList.add('open');
+          lineas = [];
+          renderLineas();
+          await loadVentas();
+        }
+      } catch (err) {
+        document.getElementById('msg').innerHTML = `<div class="alert error">${err.message}</div>`;
+      }
+    };
+
+    (async () => {
+      const [clientes, serv, cfg] = await Promise.all([
+        API.request('/api/clientes'),
+        API.request('/api/servicios?activo=1'),
+        API.request('/api/configuracion/qr-cobro'),
+      ]);
+      servicios = serv;
+      config = cfg;
+      document.getElementById('cliente').innerHTML = clientes
+        .map((c) => `<option value="${c.id}">${c.nombres} ${c.apellidos}</option>`).join('');
+      document.getElementById('servicio').innerHTML = servicios
+        .map((s) => `<option value="${s.id}">${s.nombre} (${money(s.precio_bob)})</option>`).join('');
+      if (servicios[0]) document.getElementById('precioOverride').value = servicios[0].precio_bob;
+      renderLineas();
+      await loadVentas();
+    })().catch((err) => {
+      document.getElementById('msg').innerHTML = `<div class="alert error">${err.message}</div>`;
+    });
+  </script>
+</body>
+</html>

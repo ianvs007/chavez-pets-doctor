@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Arqueo · Chavez Pet's Doctor</title>
+  <link rel="stylesheet" href="/css/app.css" />
+</head>
+<body>
+  <script src="/js/api.js"></script>
+  <script>
+    renderShell({ title: 'Arqueo diario', active: 'arqueo' });
+    const page = document.getElementById('page');
+    const today = new Date().toISOString().slice(0, 10);
+    page.innerHTML = `
+      <div class="panel">
+        <div class="form-actions" style="margin-top:0">
+          <div class="form-row" style="margin:0">
+            <label>Fecha</label>
+            <input type="date" id="fecha" value="${today}" />
+          </div>
+          <button class="btn secondary" id="btn" style="align-self:end">Actualizar</button>
+        </div>
+        <div id="out" style="margin-top:1rem"></div>
+      </div>
+    `;
+
+    async function load() {
+      const fecha = document.getElementById('fecha').value;
+      const data = await API.request(`/api/ventas/arqueo?fecha=${fecha}`);
+      document.getElementById('out').innerHTML = `
+        <div class="stats" style="margin-bottom:1rem">
+          <div class="stat"><span class="muted">Total pagado</span><strong>${money(data.totales_pagados.total_pagado)}</strong></div>
+          <div class="stat"><span class="muted">Efectivo</span><strong>${money(data.totales_pagados.efectivo)}</strong></div>
+          <div class="stat"><span class="muted">QR pagado</span><strong>${money(data.totales_pagados.qr)}</strong></div>
+          <div class="stat"><span class="muted">Pendientes QR</span><strong>${data.pendientes.n} (${money(data.pendientes.monto)})</strong></div>
+        </div>
+        <h2>Detalle del día</h2>
+        <table>
+          <thead><tr><th>Hora</th><th>Recibo</th><th>Cliente</th><th>Método</th><th>Estado</th><th>Total</th></tr></thead>
+          <tbody>
+            ${data.detalle.map((v) => `
+              <tr>
+                <td>${fmtDateTime(v.fecha)}</td>
+                <td>${v.numero_recibo || '—'}</td>
+                <td>${v.cliente_nombre}</td>
+                <td>${v.metodo_pago}</td>
+                <td>${badgePago(v.estado_pago)}</td>
+                <td>${money(v.total)}</td>
+              </tr>`).join('') || '<tr><td colspan="6">Sin movimientos</td></tr>'}
+          </tbody>
+        </table>`;
+    }
+
+    document.getElementById('btn').onclick = () => load().catch(alert);
+    load().catch((err) => {
+      document.getElementById('out').innerHTML = `<div class="alert error">${err.message}</div>`;
+    });
+  </script>
+</body>
+</html>

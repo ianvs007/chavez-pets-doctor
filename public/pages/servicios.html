@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Servicios · Chavez Pet's Doctor</title>
+  <link rel="stylesheet" href="/css/app.css" />
+</head>
+<body>
+  <script src="/js/api.js"></script>
+  <script>
+    renderShell({ title: 'Catálogo de servicios (BOB)', active: 'servicios' });
+    const page = document.getElementById('page');
+    page.innerHTML = `
+      <div class="grid grid-2">
+        <div class="panel">
+          <h2>Precios editables</h2>
+          <div id="lista"></div>
+        </div>
+        <div class="panel">
+          <h2>Nuevo / editar</h2>
+          <form id="form">
+            <input type="hidden" id="id" />
+            <div class="form-row"><label>Nombre</label><input id="nombre" required /></div>
+            <div class="form-row"><label>Tipo</label>
+              <select id="tipo">
+                <option value="consulta">consulta</option>
+                <option value="vacuna">vacuna</option>
+                <option value="cirugia">cirugia</option>
+                <option value="otro">otro</option>
+              </select>
+            </div>
+            <div class="form-row"><label>Precio (Bs)</label><input id="precio" type="number" step="0.01" min="0" required /></div>
+            <div class="form-row"><label>Activo</label>
+              <select id="activo"><option value="1">Sí</option><option value="0">No</option></select>
+            </div>
+            <div class="form-actions">
+              <button class="btn" type="submit">Guardar</button>
+              <button class="btn secondary" type="button" id="limpiar">Limpiar</button>
+            </div>
+          </form>
+          <div id="msg"></div>
+        </div>
+      </div>
+    `;
+
+    async function load() {
+      const rows = await API.request('/api/servicios');
+      document.getElementById('lista').innerHTML = `
+        <table>
+          <thead><tr><th>Servicio</th><th>Tipo</th><th>Precio</th><th>Estado</th><th></th></tr></thead>
+          <tbody>
+            ${rows.map((s) => `
+              <tr>
+                <td>${s.nombre}</td>
+                <td>${s.tipo}</td>
+                <td>${money(s.precio_bob)}</td>
+                <td>${Number(s.activo) ? '<span class="badge ok">activo</span>' : '<span class="badge">inactivo</span>'}</td>
+                <td><button class="btn secondary" data-id="${s.id}">Editar</button></td>
+              </tr>`).join('')}
+          </tbody>
+        </table>`;
+      document.querySelectorAll('[data-id]').forEach((btn) => {
+        btn.onclick = () => {
+          const s = rows.find((x) => String(x.id) === btn.dataset.id);
+          document.getElementById('id').value = s.id;
+          document.getElementById('nombre').value = s.nombre;
+          document.getElementById('tipo').value = s.tipo;
+          document.getElementById('precio').value = s.precio_bob;
+          document.getElementById('activo').value = String(s.activo);
+        };
+      });
+    }
+
+    document.getElementById('limpiar').onclick = () => {
+      document.getElementById('form').reset();
+      document.getElementById('id').value = '';
+    };
+
+    document.getElementById('form').onsubmit = async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('id').value;
+      const body = {
+        nombre: document.getElementById('nombre').value.trim(),
+        tipo: document.getElementById('tipo').value,
+        precio_bob: Number(document.getElementById('precio').value),
+        activo: document.getElementById('activo').value === '1',
+      };
+      try {
+        if (id) await API.request(`/api/servicios/${id}`, { method: 'PUT', body });
+        else await API.request('/api/servicios', { method: 'POST', body });
+        document.getElementById('msg').innerHTML = '<div class="alert ok">Guardado</div>';
+        document.getElementById('form').reset();
+        document.getElementById('id').value = '';
+        await load();
+      } catch (err) {
+        document.getElementById('msg').innerHTML = `<div class="alert error">${err.message}</div>`;
+      }
+    };
+
+    load().catch((err) => {
+      document.getElementById('lista').innerHTML = `<div class="alert error">${err.message}</div>`;
+    });
+  </script>
+</body>
+</html>

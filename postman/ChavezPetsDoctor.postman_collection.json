@@ -1,0 +1,382 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "name": "Chavez Pets Doctor Veterinaria",
+    "description": "Colección API primera entrega — auth, CRUD, caja efectivo/QR, verificación y arqueo.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://127.0.0.1:3847" },
+    { "key": "token", "value": "" },
+    { "key": "ventaId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login veterinario",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "if (j.token) pm.collectionVariables.set('token', j.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"vet@chavezpets.bo\",\n  \"password\": \"Vet123!\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/login"
+          }
+        },
+        {
+          "name": "Login asistente",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"asistente@chavezpets.bo\",\n  \"password\": \"Asist123!\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/login"
+          }
+        },
+        {
+          "name": "Profile",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/auth/profile"
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/auth/logout"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Config QR",
+      "item": [
+        {
+          "name": "GET QR cobro",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/configuracion/qr-cobro"
+          }
+        },
+        {
+          "name": "POST QR cobro (multipart)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "banco_nombre", "value": "Banco Union", "type": "text" },
+                { "key": "cuenta_info", "value": "QR clínica Chavez Pets", "type": "text" },
+                { "key": "qr", "type": "file", "src": [] }
+              ]
+            },
+            "url": "{{baseUrl}}/api/configuracion/qr-cobro"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Clientes",
+      "item": [
+        {
+          "name": "Listar",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/clientes"
+          }
+        },
+        {
+          "name": "Crear",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombres\": \"Ana\",\n  \"apellidos\": \"Pérez\",\n  \"ci\": \"9988776\",\n  \"telefono\": \"70001111\"\n}"
+            },
+            "url": "{{baseUrl}}/api/clientes"
+          }
+        },
+        {
+          "name": "Actualizar",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"telefono\": \"70002222\"\n}"
+            },
+            "url": "{{baseUrl}}/api/clientes/1"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Pacientes",
+      "item": [
+        {
+          "name": "Listar",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/pacientes?cliente_id=1"
+          }
+        },
+        {
+          "name": "Crear",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cliente_id\": 1,\n  \"nombre\": \"Toby\",\n  \"especie\": \"Canino\",\n  \"raza\": \"Beagle\",\n  \"sexo\": \"macho\",\n  \"peso_kg\": 9.5\n}"
+            },
+            "url": "{{baseUrl}}/api/pacientes"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Citas",
+      "item": [
+        {
+          "name": "Listar por fecha",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/citas?fecha=2026-10-13"
+          }
+        },
+        {
+          "name": "Crear",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paciente_id\": 1,\n  \"cliente_id\": 1,\n  \"veterinario_id\": 1,\n  \"fecha_hora\": \"2026-10-14 09:30:00\",\n  \"tipo\": \"consulta\",\n  \"motivo\": \"Control\",\n  \"estado\": \"programada\"\n}"
+            },
+            "url": "{{baseUrl}}/api/citas"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Servicios",
+      "item": [
+        {
+          "name": "Listar",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/servicios"
+          }
+        },
+        {
+          "name": "Crear",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Desparasitación\",\n  \"tipo\": \"otro\",\n  \"precio_bob\": 45.00,\n  \"activo\": true\n}"
+            },
+            "url": "{{baseUrl}}/api/servicios"
+          }
+        },
+        {
+          "name": "Editar precio",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"precio_bob\": 85.00\n}"
+            },
+            "url": "{{baseUrl}}/api/servicios/1"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Ventas / Caja",
+      "item": [
+        {
+          "name": "Cobro efectivo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "if (j.id) pm.collectionVariables.set('ventaId', String(j.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cliente_id\": 1,\n  \"descuento\": 0,\n  \"monto_recibido\": 100,\n  \"items\": [\n    {\n      \"servicio_id\": 1,\n      \"descripcion\": \"Consulta general\",\n      \"cantidad\": 1,\n      \"precio_unitario\": 80\n    }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/api/ventas/efectivo"
+          }
+        },
+        {
+          "name": "Cobro QR (crear)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "if (j.id) pm.collectionVariables.set('ventaId', String(j.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cliente_id\": 1,\n  \"referencia_pago\": \"TRX-001\",\n  \"banco_origen\": \"Banco Nacional\",\n  \"items\": [\n    {\n      \"servicio_id\": 1,\n      \"descripcion\": \"Consulta general\",\n      \"cantidad\": 1,\n      \"precio_unitario\": 80\n    }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/api/ventas/qr"
+          }
+        },
+        {
+          "name": "Subir comprobante QR",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "comprobante", "type": "file", "src": [] },
+                { "key": "referencia_pago", "value": "TRX-001", "type": "text" },
+                { "key": "banco_origen", "value": "Banco Nacional", "type": "text" }
+              ]
+            },
+            "url": "{{baseUrl}}/api/ventas/{{ventaId}}/comprobante"
+          }
+        },
+        {
+          "name": "Confirmar pago QR",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/ventas/{{ventaId}}/confirmar"
+          }
+        },
+        {
+          "name": "Rechazar pago QR",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"motivo\": \"Monto no coincide en extracto bancario\"\n}"
+            },
+            "url": "{{baseUrl}}/api/ventas/{{ventaId}}/rechazar"
+          }
+        },
+        {
+          "name": "Recibo (solo pagado)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/ventas/{{ventaId}}/recibo"
+          }
+        },
+        {
+          "name": "Arqueo diario",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/ventas/arqueo?fecha=2026-10-13",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "ventas", "arqueo"],
+              "query": [{ "key": "fecha", "value": "2026-10-13" }]
+            }
+          }
+        },
+        {
+          "name": "Listar pendientes verificación",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/ventas?estado=pendiente_verificacion"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health check",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/health"
+          }
+        }
+      ]
+    }
+  ]
+}

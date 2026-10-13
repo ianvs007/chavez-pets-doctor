@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Config QR · Chavez Pet's Doctor</title>
+  <link rel="stylesheet" href="/css/app.css" />
+</head>
+<body>
+  <script src="/js/api.js"></script>
+  <script>
+    renderShell({ title: 'Configuración QR de cobro', active: 'config' });
+    const user = API.getUser();
+    const page = document.getElementById('page');
+    if (user?.rol !== 'veterinario') {
+      page.innerHTML = `<div class="alert error">Solo el rol veterinario puede actualizar el QR de cobro.</div>`;
+    } else {
+      page.innerHTML = `
+        <div class="panel" style="max-width:560px">
+          <h2>QR de la clínica</h2>
+          <div id="preview"></div>
+          <form id="form">
+            <div class="form-row"><label>Banco</label><input id="banco" /></div>
+            <div class="form-row"><label>Info de cuenta</label><input id="cuenta" /></div>
+            <div class="form-row"><label>Imagen QR</label><input type="file" id="qr" accept="image/*" /></div>
+            <div class="form-actions"><button class="btn" type="submit">Guardar</button></div>
+          </form>
+          <div id="msg"></div>
+        </div>`;
+
+      async function load() {
+        const cfg = await API.request('/api/configuracion/qr-cobro');
+        document.getElementById('banco').value = cfg.banco_nombre || '';
+        document.getElementById('cuenta').value = cfg.cuenta_info || '';
+        document.getElementById('preview').innerHTML = cfg.qr_cobro_path
+          ? `<img class="qr-preview" src="${cfg.qr_cobro_path}" alt="QR actual" />`
+          : '<p class="muted">Aún no hay QR cargado.</p>';
+      }
+
+      document.getElementById('form').onsubmit = async (e) => {
+        e.preventDefault();
+        const fd = new FormData();
+        fd.append('banco_nombre', document.getElementById('banco').value);
+        fd.append('cuenta_info', document.getElementById('cuenta').value);
+        const file = document.getElementById('qr').files[0];
+        if (file) fd.append('qr', file);
+        try {
+          await API.request('/api/configuracion/qr-cobro', { method: 'POST', body: fd });
+          document.getElementById('msg').innerHTML = '<div class="alert ok">Configuración actualizada</div>';
+          await load();
+        } catch (err) {
+          document.getElementById('msg').innerHTML = `<div class="alert error">${err.message}</div>`;
+        }
+      };
+
+      load().catch((err) => {
+        document.getElementById('msg').innerHTML = `<div class="alert error">${err.message}</div>`;
+      });
+    }
+  </script>
+</body>
+</html>

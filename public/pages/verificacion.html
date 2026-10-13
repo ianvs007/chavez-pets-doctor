@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Verificación QR · Chavez Pet's Doctor</title>
+  <link rel="stylesheet" href="/css/app.css" />
+</head>
+<body>
+  <script src="/js/api.js"></script>
+  <script>
+    renderShell({ title: 'Bandeja de verificación QR', active: 'verificacion' });
+    const page = document.getElementById('page');
+    page.innerHTML = `<div class="panel"><div id="lista">Cargando…</div><div id="msg"></div></div>`;
+
+    async function load() {
+      const rows = await API.request('/api/ventas?estado=pendiente_verificacion&metodo=qr');
+      document.getElementById('lista').innerHTML = `
+        <table>
+          <thead><tr><th>Venta</th><th>Cliente</th><th>Monto</th><th>Comprobante</th><th>Acciones</th></tr></thead>
+          <tbody>
+            ${rows.map((v) => `
+              <tr>
+                <td>#${v.id}<div class="muted">${fmtDateTime(v.fecha)}</div>
+                  <div class="muted">${v.referencia_pago || ''} ${v.banco_origen || ''}</div>
+                </td>
+                <td>${v.cliente_nombre}</td>
+                <td>${money(v.total)}</td>
+                <td>${v.comprobante_path ? `<a href="${v.comprobante_path}" target="_blank">Ver</a>` : '<span class="badge danger">sin archivo</span>'}</td>
+                <td>
+                  <button class="btn" data-ok="${v.id}" ${v.comprobante_path ? '' : 'disabled'}>Confirmar</button>
+                  <button class="btn danger" data-no="${v.id}">Rechazar</button>
+                </td>
+              </tr>`).join('') || '<tr><td colspan="5">No hay pagos pendientes</td></tr>'}
+          </tbody>
+        </table>`;
+
+      document.querySelectorAll('[data-ok]').forEach((btn) => {
+        btn.onclick = async () => {
+          try {
+            const venta = await API.request(`/api/ventas/${btn.dataset.ok}/confirmar`, { method: 'POST' });
+            document.getElementById('msg').innerHTML =
+              `<div class="alert ok">Confirmado. <a href="/pages/recibo.html?id=${venta.id}">Recibo 80mm</a></div>`;
+            await load();
+          } catch (err) {
+            document.getElementById('msg').innerHTML = `<div class="alert error">${err.message}</div>`;
+          }
+        };
+      });
+      document.querySelectorAll('[data-no]').forEach((btn) => {
+        btn.onclick = async () => {
+          const motivo = prompt('Motivo del rechazo');
+          if (!motivo) return;
+          try {
+            await API.request(`/api/ventas/${btn.dataset.no}/rechazar`, {
+              method: 'POST',
+              body: { motivo },
+            });
+            document.getElementById('msg').innerHTML = '<div class="alert ok">Pago rechazado</div>';
+            await load();
+          } catch (err) {
+            document.getElementById('msg').innerHTML = `<div class="alert error">${err.message}</div>`;
+          }
+        };
+      });
+    }
+
+    load().catch((err) => {
+      document.getElementById('lista').innerHTML = `<div class="alert error">${err.message}</div>`;
+    });
+  </script>
+</body>
+</html>

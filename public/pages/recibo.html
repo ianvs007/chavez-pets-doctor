@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Recibo 80mm · Chavez Pet's Doctor</title>
+  <link rel="stylesheet" href="/css/app.css" />
+</head>
+<body>
+  <div class="no-print" style="padding:1rem;text-align:center">
+    <button class="btn" onclick="window.print()">Imprimir 80mm</button>
+    <a class="btn secondary" href="/pages/caja.html">Volver a caja</a>
+    <div id="msg"></div>
+  </div>
+  <div id="recibo" class="recibo">Cargando…</div>
+  <script src="/js/api.js"></script>
+  <script>
+    if (!API.requireAuth()) throw new Error('auth');
+    const id = new URLSearchParams(location.search).get('id');
+    (async () => {
+      try {
+        const data = await API.request(`/api/ventas/${id}/recibo`);
+        const { clinica, venta } = data;
+        document.getElementById('recibo').innerHTML = `
+          <h2>${clinica?.nombre_clinica || "Chavez Pet's Doctor Veterinaria"}</h2>
+          <div style="text-align:center">${clinica?.direccion || ''}<br/>${clinica?.telefono || ''}</div>
+          <div class="line"></div>
+          <div>Recibo: <strong>${venta.numero_recibo}</strong></div>
+          <div>Fecha: ${fmtDateTime(venta.fecha)}</div>
+          <div>Cliente: ${venta.cliente_nombre}</div>
+          <div>CI: ${venta.cliente_ci || '—'}</div>
+          <div>Cajero: ${venta.cajero_nombre}</div>
+          <div>Pago: ${venta.metodo_pago.toUpperCase()}</div>
+          <div class="line"></div>
+          <table>
+            <tbody>
+              ${(venta.detalle || []).map((d) => `
+                <tr>
+                  <td>${d.descripcion} x${d.cantidad}</td>
+                  <td class="right">${Number(d.subtotal).toFixed(2)}</td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+          <div class="line"></div>
+          <div>Subtotal: <span style="float:right">${Number(venta.subtotal).toFixed(2)}</span></div>
+          <div>Desc.: <span style="float:right">${Number(venta.descuento).toFixed(2)}</span></div>
+          <div><strong>TOTAL Bs <span style="float:right">${Number(venta.total).toFixed(2)}</span></strong></div>
+          ${venta.metodo_pago === 'efectivo' ? `
+            <div>Recibido: <span style="float:right">${Number(venta.monto_recibido).toFixed(2)}</span></div>
+            <div>Vuelto: <span style="float:right">${Number(venta.vuelto).toFixed(2)}</span></div>` : ''}
+          <div class="line"></div>
+          <div style="text-align:center">¡Gracias por su preferencia!</div>
+        `;
+      } catch (err) {
+        document.getElementById('recibo').textContent = '';
+        document.getElementById('msg').innerHTML = `<div class="alert error">${err.message}</div>`;
+      }
+    })();
+  </script>
+</body>
+</html>

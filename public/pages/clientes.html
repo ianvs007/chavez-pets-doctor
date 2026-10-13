@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Clientes · Chavez Pet's Doctor</title>
+  <link rel="stylesheet" href="/css/app.css" />
+</head>
+<body>
+  <script src="/js/api.js"></script>
+  <script>
+    renderShell({ title: 'Clientes y pacientes', active: 'clientes' });
+    const page = document.getElementById('page');
+
+    page.innerHTML = `
+      <div class="grid grid-2">
+        <div class="panel">
+          <h2>Propietarios</h2>
+          <div class="form-row"><input id="qCliente" placeholder="Buscar nombre, CI o teléfono" /></div>
+          <div id="listaClientes"></div>
+          <hr style="border:none;border-top:1px solid var(--line);margin:1rem 0" />
+          <h2>Nuevo / editar cliente</h2>
+          <form id="formCliente">
+            <input type="hidden" id="clienteId" />
+            <div class="form-row"><label>Nombres</label><input id="nombres" required /></div>
+            <div class="form-row"><label>Apellidos</label><input id="apellidos" required /></div>
+            <div class="form-row"><label>CI</label><input id="ci" /></div>
+            <div class="form-row"><label>Teléfono</label><input id="telefono" /></div>
+            <div class="form-row"><label>Email</label><input id="email" type="email" /></div>
+            <div class="form-row"><label>Dirección</label><input id="direccion" /></div>
+            <div class="form-actions">
+              <button class="btn" type="submit">Guardar</button>
+              <button class="btn secondary" type="button" id="resetCliente">Limpiar</button>
+            </div>
+          </form>
+        </div>
+        <div class="panel">
+          <h2>Pacientes</h2>
+          <div id="listaPacientes" class="muted">Seleccione un cliente</div>
+          <hr style="border:none;border-top:1px solid var(--line);margin:1rem 0" />
+          <h2>Nuevo paciente</h2>
+          <form id="formPaciente">
+            <div class="form-row"><label>Cliente</label><select id="pacienteCliente" required></select></div>
+            <div class="form-row"><label>Nombre</label><input id="pNombre" required /></div>
+            <div class="form-row"><label>Especie</label><input id="pEspecie" required placeholder="Canino / Felino" /></div>
+            <div class="form-row"><label>Raza</label><input id="pRaza" /></div>
+            <div class="form-row"><label>Sexo</label>
+              <select id="pSexo">
+                <option value="desconocido">desconocido</option>
+                <option value="macho">macho</option>
+                <option value="hembra">hembra</option>
+              </select>
+            </div>
+            <div class="form-row"><label>Peso (kg)</label><input id="pPeso" type="number" step="0.01" /></div>
+            <div class="form-actions"><button class="btn" type="submit">Guardar paciente</button></div>
+          </form>
+        </div>
+      </div>
+      <div id="msg"></div>
+    `;
+
+    let clientes = [];
+    let selectedClienteId = null;
+
+    function showMsg(text, ok = true) {
+      document.getElementById('msg').innerHTML = `<div class="alert ${ok ? 'ok' : 'error'}">${text}</div>`;
+    }
+
+    async function loadClientes() {
+      const q = document.getElementById('qCliente').value.trim();
+      clientes = await API.request('/api/clientes' + (q ? `?q=${encodeURIComponent(q)}` : ''));
+      document.getElementById('listaClientes').innerHTML = `
+        <table>
+          <thead><tr><th>Nombre</th><th>Tel</th><th></th></tr></thead>
+          <tbody>
+            ${clientes.map((c) => `
+              <tr>
+                <td><strong>${c.nombres} ${c.apellidos}</strong><div class="muted">${c.ci || ''}</div></td>
+                <td>${c.telefono || '—'}</td>
+                <td>
+                  <button class="btn secondary" data-edit="${c.id}">Editar</button>
+                  <button class="btn" data-sel="${c.id}">Pacientes</button>
+                </td>
+              </tr>`).join('') || '<tr><td colspan="3">Sin resultados</td></tr>'}
+          </tbody>
+        </table>`;
+      const sel = document.getElementById('pacienteCliente');
+      sel.innerHTML = clientes.map((c) => `<option value="${c.id}">${c.nombres} ${c.apellidos}</option>`).join('');
+      if (selectedClienteId) sel.value = selectedClienteId;
+
+      document.querySelectorAll('[data-edit]').forEach((btn) => {
+        btn.onclick = () => {
+          const c = clientes.find((x) => String(x.id) === btn.dataset.edit);
+          if (!c) return;
+          document.getElementById('clienteId').value = c.id;
+          document.getElementById('nombres').value = c.nombres;
+          document.getElementById('apellidos').value = c.apellidos;
+          document.getElementById('ci').value = c.ci || '';
+          document.getElementById('telefono').value = c.telefono || '';
+          document.getElementById('email').value = c.email || '';
+          document.getElementById('direccion').value = c.direccion || '';
+        };
+      });
+      document.querySelectorAll('[data-sel]').forEach((btn) => {
+        btn.onclick = () => loadPacientes(btn.dataset.sel);
+      });
+    }
+
+    async function loadPacientes(clienteId) {
+      selectedClienteId = clienteId;
+      document.getElementById('pacienteCliente').value = clienteId;
+      const rows = await API.request(`/api/pacientes?cliente_id=${clienteId}`);
+      document.getElementById('listaPacientes').innerHTML = `
+        <table>
+          <thead><tr><th>Nombre</th><th>Especie</th><th>Sexo</th><th>Peso</th></tr></thead>
+          <tbody>
+            ${rows.map((p) => `
+              <tr>
+                <td>${p.nombre}</td>
+                <td>${p.especie}${p.raza ? ` · ${p.raza}` : ''}</td>
+                <td>${p.sexo}</td>
+                <td>${p.peso_kg ?? '—'}</td>
+              </tr>`).join('') || '<tr><td colspan="4">Sin pacientes</td></tr>'}
+          </tbody>
+        </table>`;
+    }
+
+    document.getElementById('qCliente').addEventListener('input', () => loadClientes().catch(console.error));
+    document.getElementById('resetCliente').onclick = () => {
+      document.getElementById('formCliente').reset();
+      document.getElementById('clienteId').value = '';
+    };
+
+    document.getElementById('formCliente').onsubmit = async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('clienteId').value;
+      const body = {
+        nombres: document.getElementById('nombres').value.trim(),
+        apellidos: document.getElementById('apellidos').value.trim(),
+        ci: document.getElementById('ci').value.trim(),
+        telefono: document.getElementById('telefono').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        direccion: document.getElementById('direccion').value.trim(),
+      };
+      try {
+        if (id) await API.request(`/api/clientes/${id}`, { method: 'PUT', body });
+        else await API.request('/api/clientes', { method: 'POST', body });
+        document.getElementById('formCliente').reset();
+        document.getElementById('clienteId').value = '';
+        showMsg('Cliente guardado');
+        await loadClientes();
+      } catch (err) {
+        showMsg(err.message, false);
+      }
+    };
+
+    document.getElementById('formPaciente').onsubmit = async (e) => {
+      e.preventDefault();
+      try {
+        await API.request('/api/pacientes', {
+          method: 'POST',
+          body: {
+            cliente_id: Number(document.getElementById('pacienteCliente').value),
+            nombre: document.getElementById('pNombre').value.trim(),
+            especie: document.getElementById('pEspecie').value.trim(),
+            raza: document.getElementById('pRaza').value.trim(),
+            sexo: document.getElementById('pSexo').value,
+            peso_kg: document.getElementById('pPeso').value || null,
+          },
+        });
+        document.getElementById('formPaciente').reset();
+        showMsg('Paciente guardado');
+        await loadPacientes(selectedClienteId || document.getElementById('pacienteCliente').value);
+        await loadClientes();
+      } catch (err) {
+        showMsg(err.message, false);
+      }
+    };
+
+    loadClientes().catch((err) => showMsg(err.message, false));
+  </script>
+</body>
+</html>
