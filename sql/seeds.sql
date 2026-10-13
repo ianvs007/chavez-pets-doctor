@@ -1,7 +1,10 @@
 -- Seeds — Chavez Pet's Doctor Veterinaria
+-- Encoding: UTF-8 (utf8mb4). Do not save this file as Latin-1/Windows-1252.
 -- Passwords (plaintext, documentados en README):
 --   vet@chavezpets.bo     / Vet123!
 --   asistente@chavezpets.bo / Asist123!
+SET NAMES utf8mb4;
+SET CHARACTER SET utf8mb4;
 USE chavez_pets;
 
 INSERT INTO usuarios (nombre, email, password_hash, rol, activo) VALUES

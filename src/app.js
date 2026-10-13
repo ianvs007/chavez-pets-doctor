@@ -17,8 +17,29 @@ app.use(cors());
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+// Always advertise UTF-8 for JSON and HTML (avoids Windows mojibake on accents)
+app.use((req, res, next) => {
+  const originalJson = res.json.bind(res);
+  res.json = (body) => {
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    return originalJson(body);
+  };
+  next();
+});
+
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
-app.use(express.static(path.join(__dirname, '../public')));
+app.use(
+  express.static(path.join(__dirname, '../public'), {
+    setHeaders(res, filePath) {
+      if (/\.(html?|js|css|json|svg|txt)$/i.test(filePath)) {
+        const type = res.getHeader('Content-Type');
+        if (typeof type === 'string' && !/charset=/i.test(type)) {
+          res.setHeader('Content-Type', `${type}; charset=utf-8`);
+        }
+      }
+    },
+  })
+);
 
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true, clinic: "Chavez Pet's Doctor Veterinaria" });

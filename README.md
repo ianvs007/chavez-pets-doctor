@@ -25,6 +25,17 @@ App: [http://127.0.0.1:3847](http://127.0.0.1:3847)
 
 MySQL queda expuesto en el puerto host **3307** (usuario `chavez` / `chavezpass`, DB `chavez_pets`).
 
+### Acentos / UTF-8 (si ves `MarÃa` en vez de `María`)
+
+El stack usa **utf8mb4** de punta a punta (MySQL server, conexión Node, JSON/HTML). Si ya cargaste seeds con datos corruptos, recrea el volumen MySQL (**borra datos locales**):
+
+```bash
+docker compose down -v
+docker compose up -d
+```
+
+Luego reinicia la app (`npm run dev`).
+
 ## Credenciales seed
 
 | Rol | Email | Password |

@@ -3,6 +3,10 @@ services:
     image: mysql:8.0
     container_name: chavez-pets-mysql
     restart: unless-stopped
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --character-set-client-handshake=FALSE
     environment:
       MYSQL_ROOT_PASSWORD: rootpass
       MYSQL_DATABASE: chavez_pets

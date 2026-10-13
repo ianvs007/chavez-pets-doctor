@@ -15,6 +15,11 @@ const pool = mysql.createPool({
   charset: 'utf8mb4',
 });
 
+// mysql2 promise pool wraps a callback pool; force session charset on every new connection
+pool.pool.on('connection', (connection) => {
+  connection.query('SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci');
+});
+
 async function query(sql, params) {
   const [rows] = await pool.execute(sql, params);
   return rows;

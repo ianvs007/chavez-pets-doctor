@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
   rol ENUM('veterinario', 'asistente') NOT NULL,
   activo TINYINT(1) NOT NULL DEFAULT 1,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS configuracion_clinica (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS configuracion_clinica (
   banco_nombre VARCHAR(120) NULL,
   cuenta_info VARCHAR(255) NULL,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS clientes (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS clientes (
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX idx_clientes_nombre (apellidos, nombres),
   INDEX idx_clientes_ci (ci)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS pacientes (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS pacientes (
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT fk_pacientes_cliente FOREIGN KEY (cliente_id) REFERENCES clientes(id),
   INDEX idx_pacientes_cliente (cliente_id)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS citas (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -81,7 +81,7 @@ CREATE TABLE IF NOT EXISTS citas (
   CONSTRAINT fk_citas_vet FOREIGN KEY (veterinario_id) REFERENCES usuarios(id),
   INDEX idx_citas_fecha (fecha_hora),
   INDEX idx_citas_estado (estado)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS servicios_catalogo (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -91,7 +91,7 @@ CREATE TABLE IF NOT EXISTS servicios_catalogo (
   activo TINYINT(1) NOT NULL DEFAULT 1,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS ventas (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -120,7 +120,7 @@ CREATE TABLE IF NOT EXISTS ventas (
   CONSTRAINT fk_ventas_verificador FOREIGN KEY (verificador_id) REFERENCES usuarios(id),
   INDEX idx_ventas_fecha (fecha),
   INDEX idx_ventas_estado (estado_pago)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS ventas_detalle (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -132,4 +132,4 @@ CREATE TABLE IF NOT EXISTS ventas_detalle (
   subtotal DECIMAL(12,2) NOT NULL,
   CONSTRAINT fk_detalle_venta FOREIGN KEY (venta_id) REFERENCES ventas(id) ON DELETE CASCADE,
   CONSTRAINT fk_detalle_servicio FOREIGN KEY (servicio_id) REFERENCES servicios_catalogo(id)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
