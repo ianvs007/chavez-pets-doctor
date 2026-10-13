@@ -1,4 +1,4 @@
--- Chavez Pet's Doctor Veterinaria — esquema fase 1
+-- Patitas al poder — esquema fase 1
 SET NAMES utf8mb4;
 SET time_zone = '-04:00';
 

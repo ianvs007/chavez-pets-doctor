@@ -1,7 +1,7 @@
 {
   "name": "chavez-pets-doctor",
   "version": "1.0.0",
-  "description": "Sistema veterinario Chavez Pet's Doctor Veterinaria — primera entrega",
+  "description": "Sistema veterinario Patitas al poder — primera entrega",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",

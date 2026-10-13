@@ -99,7 +99,7 @@ function renderShell({ title, active }) {
   document.body.innerHTML = `
     <div class="app-shell">
       <aside class="sidebar">
-        <div class="brand">Chavez Pet's Doctor<small>Veterinaria · Bolivia</small></div>
+        <div class="brand">Patitas al poder<small>Veterinaria · Bolivia</small></div>
         <nav class="nav">
           ${links
             .map(

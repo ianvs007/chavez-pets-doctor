@@ -1,4 +1,4 @@
--- Seeds — Chavez Pet's Doctor Veterinaria
+-- Seeds — Patitas al poder
 -- Encoding: UTF-8 (utf8mb4). Do not save this file as Latin-1/Windows-1252.
 -- Passwords (plaintext, documentados en README):
 --   vet@chavezpets.bo     / Vet123!
@@ -14,7 +14,7 @@ INSERT INTO usuarios (nombre, email, password_hash, rol, activo) VALUES
 INSERT INTO configuracion_clinica (
   nombre_clinica, nit, direccion, telefono, ciudad, banco_nombre, cuenta_info
 ) VALUES (
-  'Chavez Pet''s Doctor Veterinaria',
+  'Patitas al poder',
   '1234567890',
   'Av. Principal #100, Bolivia',
   '+591 70000000',

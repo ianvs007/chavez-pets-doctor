@@ -1,4 +1,4 @@
-# Chavez Pet's Doctor Veterinaria
+# Patitas al poder
 
 Sistema veterinario — **primera entrega**: autenticación JWT/RBAC, clientes y pacientes, agenda, catálogo de servicios con precios editables en BOB, caja (efectivo + QR con verificación manual), recibo 80 mm y arqueo diario.
 
@@ -36,6 +36,22 @@ docker compose up -d
 
 Luego reinicia la app (`npm run dev`).
 
+### Nombre de clínica en DB ya existente
+
+Los seeds cargan `configuracion_clinica.nombre_clinica = 'Patitas al poder'`. Si MySQL ya tenía el nombre anterior, o bien recreas el volumen (comando de arriba) o actualizas sin borrar datos:
+
+```sql
+UPDATE configuracion_clinica SET nombre_clinica = 'Patitas al poder' WHERE id = 1;
+```
+
+Ejemplo con Docker:
+
+```bash
+docker compose exec mysql mysql -uchavez -pchavezpass chavez_pets -e "UPDATE configuracion_clinica SET nombre_clinica = 'Patitas al poder' WHERE id = 1;"
+```
+
+(El servicio MySQL en `docker-compose.yml` se llama `mysql`.)
+
 ## Credenciales seed
 
 | Rol | Email | Password |
@@ -64,7 +80,7 @@ También se cargan 2 propietarios, 3 pacientes, citas de ejemplo y 5 servicios c
 - CRUD `/api/clientes`, `/api/pacientes`, `/api/citas`, `/api/servicios`
 - Ventas: `POST /api/ventas/efectivo`, `POST /api/ventas/qr`, `POST /api/ventas/:id/comprobante`, `POST .../confirmar`, `POST .../rechazar`, `GET .../recibo`, `GET /api/ventas/arqueo`
 
-Colección Postman v2.1: [`postman/ChavezPetsDoctor.postman_collection.json`](postman/ChavezPetsDoctor.postman_collection.json)
+Colección Postman v2.1: [`postman/PatitasAlPoder.postman_collection.json`](postman/PatitasAlPoder.postman_collection.json)
 
 ## Estructura
 

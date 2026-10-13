@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Recibo 80mm · Chavez Pet's Doctor</title>
+  <title>Recibo 80mm · Patitas al poder</title>
   <link rel="stylesheet" href="/css/app.css" />
 </head>
 <body>
@@ -22,7 +22,7 @@
         const data = await API.request(`/api/ventas/${id}/recibo`);
         const { clinica, venta } = data;
         document.getElementById('recibo').innerHTML = `
-          <h2>${clinica?.nombre_clinica || "Chavez Pet's Doctor Veterinaria"}</h2>
+          <h2>${clinica?.nombre_clinica || "Patitas al poder"}</h2>
           <div style="text-align:center">${clinica?.direccion || ''}<br/>${clinica?.telefono || ''}</div>
           <div class="line"></div>
           <div>Recibo: <strong>${venta.numero_recibo}</strong></div>

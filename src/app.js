@@ -42,7 +42,7 @@ app.use(
 );
 
 app.get('/api/health', (_req, res) => {
-  res.json({ ok: true, clinic: "Chavez Pet's Doctor Veterinaria" });
+  res.json({ ok: true, clinic: "Patitas al poder" });
 });
 
 app.use('/api/auth', authRoutes);

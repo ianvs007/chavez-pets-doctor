@@ -1,14 +1,23 @@
 {
   "info": {
     "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-    "name": "Chavez Pets Doctor Veterinaria",
+    "name": "Patitas al poder",
     "description": "Colección API primera entrega — auth, CRUD, caja efectivo/QR, verificación y arqueo.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "baseUrl", "value": "http://127.0.0.1:3847" },
-    { "key": "token", "value": "" },
-    { "key": "ventaId", "value": "" }
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:3847"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "ventaId",
+      "value": ""
+    }
   ],
   "item": [
     {
@@ -30,7 +39,12 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"vet@chavezpets.bo\",\n  \"password\": \"Vet123!\"\n}"
@@ -42,7 +56,12 @@
           "name": "Login asistente",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"asistente@chavezpets.bo\",\n  \"password\": \"Asist123!\"\n}"
@@ -54,7 +73,12 @@
           "name": "Profile",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/auth/profile"
           }
         },
@@ -62,7 +86,12 @@
           "name": "Logout",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/auth/logout"
           }
         }
@@ -75,7 +104,12 @@
           "name": "GET QR cobro",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/configuracion/qr-cobro"
           }
         },
@@ -83,13 +117,30 @@
           "name": "POST QR cobro (multipart)",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
             "body": {
               "mode": "formdata",
               "formdata": [
-                { "key": "banco_nombre", "value": "Banco Union", "type": "text" },
-                { "key": "cuenta_info", "value": "QR clínica Chavez Pets", "type": "text" },
-                { "key": "qr", "type": "file", "src": [] }
+                {
+                  "key": "banco_nombre",
+                  "value": "Banco Union",
+                  "type": "text"
+                },
+                {
+                  "key": "cuenta_info",
+                  "value": "QR clínica Patitas al poder",
+                  "type": "text"
+                },
+                {
+                  "key": "qr",
+                  "type": "file",
+                  "src": []
+                }
               ]
             },
             "url": "{{baseUrl}}/api/configuracion/qr-cobro"
@@ -104,7 +155,12 @@
           "name": "Listar",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/clientes"
           }
         },
@@ -113,8 +169,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -128,8 +190,14 @@
           "request": {
             "method": "PUT",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -147,7 +215,12 @@
           "name": "Listar",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/pacientes?cliente_id=1"
           }
         },
@@ -156,8 +229,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -175,7 +254,12 @@
           "name": "Listar por fecha",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/citas?fecha=2026-10-13"
           }
         },
@@ -184,8 +268,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -203,7 +293,12 @@
           "name": "Listar",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/servicios"
           }
         },
@@ -212,8 +307,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -227,8 +328,14 @@
           "request": {
             "method": "PUT",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -259,8 +366,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -286,8 +399,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -300,13 +419,30 @@
           "name": "Subir comprobante QR",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
             "body": {
               "mode": "formdata",
               "formdata": [
-                { "key": "comprobante", "type": "file", "src": [] },
-                { "key": "referencia_pago", "value": "TRX-001", "type": "text" },
-                { "key": "banco_origen", "value": "Banco Nacional", "type": "text" }
+                {
+                  "key": "comprobante",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "referencia_pago",
+                  "value": "TRX-001",
+                  "type": "text"
+                },
+                {
+                  "key": "banco_origen",
+                  "value": "Banco Nacional",
+                  "type": "text"
+                }
               ]
             },
             "url": "{{baseUrl}}/api/ventas/{{ventaId}}/comprobante"
@@ -316,7 +452,12 @@
           "name": "Confirmar pago QR",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/ventas/{{ventaId}}/confirmar"
           }
         },
@@ -325,8 +466,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -339,7 +486,12 @@
           "name": "Recibo (solo pagado)",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/ventas/{{ventaId}}/recibo"
           }
         },
@@ -347,12 +499,28 @@
           "name": "Arqueo diario",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/api/ventas/arqueo?fecha=2026-10-13",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "ventas", "arqueo"],
-              "query": [{ "key": "fecha", "value": "2026-10-13" }]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ventas",
+                "arqueo"
+              ],
+              "query": [
+                {
+                  "key": "fecha",
+                  "value": "2026-10-13"
+                }
+              ]
             }
           }
         },
@@ -360,7 +528,12 @@
           "name": "Listar pendientes verificación",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/ventas?estado=pendiente_verificacion"
           }
         }

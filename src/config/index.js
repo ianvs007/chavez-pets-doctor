@@ -13,5 +13,5 @@ module.exports = {
     password: process.env.DB_PASSWORD || 'chavezpass',
     database: process.env.DB_NAME || 'chavez_pets',
   },
-  clinicName: "Chavez Pet's Doctor Veterinaria",
+  clinicName: "Patitas al poder",
 };

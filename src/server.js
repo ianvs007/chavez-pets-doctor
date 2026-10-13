@@ -20,7 +20,7 @@ async function waitForDb(retries = 30) {
 waitForDb()
   .then(() => {
     app.listen(config.port, '0.0.0.0', () => {
-      console.log(`Chavez Pet's Doctor escuchando en http://127.0.0.1:${config.port}`);
+      console.log(`Patitas al poder escuchando en http://127.0.0.1:${config.port}`);
     });
   })
   .catch((err) => {
