@@ -86,6 +86,7 @@ a:hover { text-decoration: underline; }
   border-radius: 2px;
   box-shadow: 0 -6px 0 currentColor, 0 6px 0 currentColor;
   transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+  pointer-events: none;
 }
 .sidebar.nav-open .nav-toggle-bars {
   box-shadow: none;

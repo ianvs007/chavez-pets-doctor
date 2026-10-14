@@ -138,7 +138,10 @@ function renderShell({ title, active }) {
     navToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
     navToggle.setAttribute('aria-label', open ? 'Cerrar menú' : 'Abrir menú');
   };
-  navToggle.onclick = () => setNavOpen(!sidebar.classList.contains('nav-open'));
+  navToggle.addEventListener('click', (e) => {
+    e.preventDefault();
+    setNavOpen(!sidebar.classList.contains('nav-open'));
+  });
   sidebar.querySelectorAll('.nav a').forEach((a) => {
     a.addEventListener('click', () => setNavOpen(false));
   });
