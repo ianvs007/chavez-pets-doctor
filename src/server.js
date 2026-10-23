@@ -1,6 +1,7 @@
 const app = require('./app');
 const config = require('./config');
 const { pool } = require('./db/pool');
+const { runMigrations } = require('./db/migrate');
 
 async function waitForDb(retries = 30) {
   for (let i = 0; i < retries; i += 1) {
@@ -18,7 +19,12 @@ async function waitForDb(retries = 30) {
 }
 
 waitForDb()
-  .then(() => {
+  .then(async () => {
+    try {
+      await runMigrations();
+    } catch (migErr) {
+      console.error('Error durante las migraciones automáticas:', migErr.message);
+    }
     app.listen(config.port, '0.0.0.0', () => {
       console.log(`Patitas al poder escuchando en http://127.0.0.1:${config.port}`);
     });

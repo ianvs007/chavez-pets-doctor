@@ -4,29 +4,34 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Dashboard · Patitas al poder</title>
+  <link rel="icon" type="image/jpeg" href="/img/logo.jpg" />
   <link rel="stylesheet" href="/css/app.css" />
 </head>
 <body>
   <script src="/js/api.js"></script>
   <script>
-    renderShell({ title: 'Dashboard', active: 'dashboard' });
+    renderShell({ title: 'Panel de Control', active: 'dashboard' });
     const page = document.getElementById('page');
-    page.innerHTML = `<div class="panel"><p class="muted">Cargando…</p></div>`;
+    page.innerHTML = `<div class="panel"><p class="muted">Cargando datos del panel…</p></div>`;
 
-    (async () => {
+    async function cargarDashboard() {
       try {
         const today = new Date().toISOString().slice(0, 10);
-        const [citas, pendientes, arqueo] = await Promise.all([
+        const [citas, pendientes, arqueo, campanas] = await Promise.all([
           API.request(`/api/citas?fecha=${today}`),
           API.request('/api/ventas?estado=pendiente_verificacion'),
           API.request(`/api/ventas/arqueo?fecha=${today}`),
+          API.request('/api/campanas?estado=activa').catch(() => []),
         ]);
+
+        const cobradoHoy = arqueo?.totales_pagados?.total_pagado || 0;
+
         page.innerHTML = `
-          <div class="stats" style="margin-bottom:1rem">
-            <div class="stat"><span class="muted">Citas hoy</span><strong>${citas.length}</strong></div>
+          <div class="stats" style="margin-bottom:1.25rem">
+            <div class="stat"><span class="muted">Citas para hoy</span><strong>${citas.length}</strong></div>
+            <div class="stat"><span class="muted">Campañas activas</span><strong>${campanas.length}</strong></div>
             <div class="stat"><span class="muted">QR por verificar</span><strong>${pendientes.length}</strong></div>
-            <div class="stat"><span class="muted">Cobrado hoy</span><strong>${money(arqueo.totales_pagados.total_pagado)}</strong></div>
-            <div class="stat"><span class="muted">Tickets pagados</span><strong>${arqueo.totales_pagados.tickets}</strong></div>
+            <div class="stat"><span class="muted">Cobrado hoy</span><strong>${money(cobradoHoy)}</strong></div>
           </div>
           <div class="grid grid-2">
             <div class="panel">
@@ -38,30 +43,47 @@
                   ${citas.map((c) => `
                     <tr>
                       <td>${fmtDateTime(c.fecha_hora).slice(11)}</td>
-                      <td>${c.paciente_nombre}<div class="muted">${c.cliente_nombre}</div></td>
-                      <td>${c.tipo}</td>
+                      <td><strong>${c.paciente_nombre}</strong><div class="muted">${c.cliente_nombre}</div></td>
+                      <td><span class="badge">${c.tipo}</span></td>
                       <td>${c.estado}</td>
-                    </tr>`).join('') || '<tr><td colspan="4">Sin citas</td></tr>'}
+                    </tr>`).join('') || '<tr><td colspan="4">Sin citas para hoy</td></tr>'}
                 </tbody>
               </table>
               </div>
             </div>
             <div class="panel">
-              <h2>Accesos rápidos</h2>
-              <div class="form-actions">
-                <a class="btn" href="/pages/caja.html">Abrir caja</a>
-                <a class="btn secondary" href="/pages/verificacion.html">Verificar QR</a>
-                <a class="btn secondary" href="/pages/clientes.html">Clientes</a>
-                <a class="btn secondary" href="/pages/servicios.html">Precios</a>
+              <h2>Accesos Rápidos del Sistema</h2>
+              <div class="form-actions" style="display:flex;flex-wrap:wrap;gap:0.5rem">
+                <a class="btn" href="/pages/historial.html">🩺 Historial y Atenciones</a>
+                <a class="btn" href="/pages/clientes.html">🐾 Registro de Mascotas</a>
+                <a class="btn secondary" href="/pages/campanas.html">📢 Campañas Sanitarias</a>
+                <a class="btn secondary" href="/pages/caja.html">💵 Cobro en Caja</a>
+                <a class="btn secondary" href="/pages/verificacion.html">📱 Verificar QR</a>
+                <a class="btn secondary" href="/pages/servicios.html">🏷️ Catálogo y Precios</a>
               </div>
-              <p class="muted" style="margin-top:1rem">Clínica: Patitas al poder</p>
+              <div style="margin-top:1.25rem;padding-top:0.75rem;border-top:1px solid var(--line);display:flex;align-items:center;gap:0.75rem">
+                <img src="/img/logo.jpg" alt="Logo" style="width:40px;height:40px;border-radius:50%;object-fit:cover" />
+                <div>
+                  <div style="font-size:0.88rem;font-weight:700">Patitas al poder</div>
+                  <div class="muted" style="font-size:0.78rem">Registro y control de atención veterinaria</div>
+                </div>
+              </div>
             </div>
           </div>
         `;
       } catch (err) {
-        page.innerHTML = `<div class="alert error">${err.message}</div>`;
+        page.innerHTML = `
+          <div class="alert error" style="margin-bottom:1rem">
+            <strong>Error al cargar el panel:</strong> ${err.message === 'Failed to fetch' ? 'No se pudo conectar con el servidor (Failed to fetch). Compruebe que el servidor Node.js y la base de datos MySQL estén activos.' : err.message}
+            <div style="margin-top:0.75rem">
+              <button class="btn secondary" onclick="cargarDashboard()">🔄 Reintentar conexión</button>
+            </div>
+          </div>
+        `;
       }
-    })();
+    }
+
+    cargarDashboard();
   </script>
 </body>
 </html>

@@ -1,4 +1,4 @@
--- Patitas al poder — esquema fase 1
+-- Patitas al poder — esquema completo
 SET NAMES utf8mb4;
 SET time_zone = '-04:00';
 
@@ -54,6 +54,7 @@ CREATE TABLE IF NOT EXISTS pacientes (
   raza VARCHAR(120) NULL,
   sexo ENUM('macho', 'hembra', 'desconocido') NOT NULL DEFAULT 'desconocido',
   color VARCHAR(80) NULL,
+  edad_aprox VARCHAR(80) NULL,
   fecha_nacimiento DATE NULL,
   peso_kg DECIMAL(6,2) NULL,
   notas TEXT NULL,
@@ -91,6 +92,63 @@ CREATE TABLE IF NOT EXISTS servicios_catalogo (
   activo TINYINT(1) NOT NULL DEFAULT 1,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS atenciones_veterinarias (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  paciente_id INT UNSIGNED NOT NULL,
+  veterinario_id INT UNSIGNED NULL,
+  servicio_id INT UNSIGNED NULL,
+  tipo_atencion ENUM('vacunacion', 'desparasitacion', 'esterilizacion', 'consulta', 'otro') NOT NULL,
+  fecha_hora DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  motivo_diagnostico TEXT NULL,
+  tratamiento_procedimiento TEXT NULL,
+  peso_actual_kg DECIMAL(6,2) NULL,
+  proxima_cita DATE NULL,
+  costo_bob DECIMAL(10,2) NULL DEFAULT 0.00,
+  notas TEXT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_atenciones_paciente FOREIGN KEY (paciente_id) REFERENCES pacientes(id) ON DELETE CASCADE,
+  CONSTRAINT fk_atenciones_vet FOREIGN KEY (veterinario_id) REFERENCES usuarios(id) ON DELETE SET NULL,
+  CONSTRAINT fk_atenciones_servicio FOREIGN KEY (servicio_id) REFERENCES servicios_catalogo(id) ON DELETE SET NULL,
+  INDEX idx_atenciones_paciente (paciente_id),
+  INDEX idx_atenciones_fecha (fecha_hora),
+  INDEX idx_atenciones_tipo (tipo_atencion)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS campanas (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  titulo VARCHAR(200) NOT NULL,
+  descripcion TEXT NULL,
+  tipo ENUM('vacunacion', 'desparasitacion', 'esterilizacion', 'consulta_general', 'otro') NOT NULL DEFAULT 'vacunacion',
+  especie_objetivo ENUM('canino', 'felino', 'todos') NOT NULL DEFAULT 'todos',
+  fecha_inicio DATE NOT NULL,
+  fecha_fin DATE NOT NULL,
+  lugar VARCHAR(255) NULL,
+  cupo_maximo INT UNSIGNED NULL DEFAULT 0,
+  costo_bob DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  estado ENUM('planificada', 'activa', 'finalizada', 'cancelada') NOT NULL DEFAULT 'activa',
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_campanas_estado (estado),
+  INDEX idx_campanas_fechas (fecha_inicio, fecha_fin)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS campana_participantes (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  campana_id INT UNSIGNED NOT NULL,
+  paciente_id INT UNSIGNED NULL,
+  tutor_nombre VARCHAR(150) NOT NULL,
+  tutor_telefono VARCHAR(40) NULL,
+  mascota_nombre VARCHAR(120) NOT NULL,
+  especie VARCHAR(80) NOT NULL,
+  asistio TINYINT(1) NOT NULL DEFAULT 0,
+  observaciones TEXT NULL,
+  fecha_registro TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_participantes_campana FOREIGN KEY (campana_id) REFERENCES campanas(id) ON DELETE CASCADE,
+  CONSTRAINT fk_participantes_paciente FOREIGN KEY (paciente_id) REFERENCES pacientes(id) ON DELETE SET NULL,
+  INDEX idx_participantes_campana (campana_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS ventas (

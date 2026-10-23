@@ -10,6 +10,7 @@ const pacientesRoutes = require('./routes/pacientes');
 const citasRoutes = require('./routes/citas');
 const serviciosRoutes = require('./routes/servicios');
 const ventasRoutes = require('./routes/ventas');
+const campanasRoutes = require('./routes/campanas');
 
 const app = express();
 
@@ -52,6 +53,7 @@ app.use('/api/pacientes', pacientesRoutes);
 app.use('/api/citas', citasRoutes);
 app.use('/api/servicios', serviciosRoutes);
 app.use('/api/ventas', ventasRoutes);
+app.use('/api/campanas', campanasRoutes);
 
 app.use(errorHandler);
 

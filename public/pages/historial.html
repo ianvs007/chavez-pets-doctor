@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Historial Clínico y Atenciones · Patitas al poder</title>
+  <link rel="icon" type="image/jpeg" href="/img/logo.jpg" />
+  <link rel="stylesheet" href="/css/app.css" />
+  <style>
+    .timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-top: 1rem;
+      position: relative;
+    }
+    .timeline-card {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 1rem;
+      background: #fff;
+      border-left: 5px solid var(--brand);
+      position: relative;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .timeline-card.vacunacion { border-left-color: #0f7a45; }
+    .timeline-card.desparasitacion { border-left-color: #c47a2c; }
+    .timeline-card.esterilizacion { border-left-color: #6366f1; }
+    .timeline-card.consulta { border-left-color: #0284c7; }
+    .timeline-card.otro { border-left-color: #64748b; }
+
+    .tag-tipo {
+      display: inline-block;
+      text-transform: uppercase;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      padding: 0.2rem 0.55rem;
+      border-radius: 6px;
+    }
+    .tag-vacunacion { background: #dcfce7; color: #166534; }
+    .tag-desparasitacion { background: #fef3c7; color: #92400e; }
+    .tag-esterilizacion { background: #e0e7ff; color: #3730a3; }
+    .tag-consulta { background: #e0f2fe; color: #075985; }
+    .tag-otro { background: #f1f5f9; color: #334155; }
+
+    .profile-card {
+      background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
+      border: 1px solid #bbf7d0;
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+    .profile-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .profile-badges {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-top: 0.4rem;
+    }
+    .chip {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 0.25rem 0.75rem;
+      font-size: 0.85rem;
+      color: var(--ink);
+    }
+    .btn-attention {
+      background: #0f7a45;
+      color: #fff;
+      font-weight: 600;
+    }
+    .btn-attention:hover { background: #0b5e35; }
+  </style>
+</head>
+<body>
+  <script src="/js/api.js"></script>
+  <script>
+    renderShell({ title: 'Historial Clínico y Atenciones Veterinarias', active: 'historial' });
+    const page = document.getElementById('page');
+
+    page.innerHTML = `
+      <div class="grid grid-2" style="grid-template-columns: 340px 1fr;">
+        <!-- Panel Izquierdo: Buscador de mascotas -->
+        <div class="panel">
+          <h2>Buscar Mascota</h2>
+          <div class="form-row">
+            <input id="qPet" placeholder="Buscar por mascota, tutor o especie..." />
+          </div>
+          <div id="petsList" style="max-height: 600px; overflow-y: auto;">
+            <p class="muted">Cargando mascotas…</p>
+          </div>
+        </div>
+
+        <!-- Panel Derecho: Perfil + Historial -->
+        <div class="panel" id="mainRecordPanel">
+          <div id="emptyPrompt" class="muted" style="text-align:center;padding:3rem 1rem">
+            <h3>Seleccione una mascota para ver su expediente clínico</h3>
+            <p>Podrá consultar vacunas, desparasitaciones, esterilizaciones y consultas realizadas.</p>
+          </div>
+          <div id="petRecord" style="display:none"></div>
+        </div>
+      </div>
+
+      <!-- Modal para Registrar Atención Veterinaria -->
+      <div id="modalAtencion" class="modal-backdrop" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:999;place-items:center;padding:1rem;">
+        <div class="modal" style="background:#fff;max-width:580px;width:100%;border-radius:16px;padding:1.5rem;max-height:90vh;overflow-y:auto;box-shadow:0 20px 40px rgba(0,0,0,0.25);">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+            <h2 id="modalAtencionTitle" style="margin:0">Registrar Atención Médica</h2>
+            <button type="button" id="closeModal" class="btn secondary" style="padding:0.3rem 0.6rem;min-height:auto">&times;</button>
+          </div>
+          <form id="formAtencion">
+            <div class="form-row">
+              <label>Tipo de Atención *</label>
+              <select id="tipoAtencion" required>
+                <option value="vacunacion">💉 Vacunación</option>
+                <option value="desparasitacion">💊 Desparasitación</option>
+                <option value="esterilizacion">✂️ Esterilización / Cirugía</option>
+                <option value="consulta" selected>🩺 Consulta General</option>
+                <option value="otro">🐾 Otro Procedimiento</option>
+              </select>
+            </div>
+            <div class="grid grid-2" style="gap:0.75rem">
+              <div class="form-row">
+                <label>Fecha y Hora *</label>
+                <input id="fechaHora" type="datetime-local" required />
+              </div>
+              <div class="form-row">
+                <label>Peso en esta consulta (kg)</label>
+                <input id="pesoActual" type="number" step="0.01" min="0" placeholder="Ej. 12.5" />
+              </div>
+            </div>
+            <div class="form-row">
+              <label>Motivo de la atención / Diagnóstico *</label>
+              <textarea id="motivoDiagnostico" rows="2" required placeholder="Ej. Chequeo preventivo anual / Vacunación séxtuple..."></textarea>
+            </div>
+            <div class="form-row">
+              <label>Tratamiento / Fármaco aplicado / Procedimiento *</label>
+              <textarea id="tratamientoProcedimiento" rows="3" required placeholder="Ej. Dosis de vacuna Nobivac Lote #9821. Se administró además vitamina..."></textarea>
+            </div>
+            <div class="grid grid-2" style="gap:0.75rem">
+              <div class="form-row">
+                <label>Próxima Dosis / Control</label>
+                <input id="proximaCita" type="date" />
+              </div>
+              <div class="form-row">
+                <label>Costo aplicado (Bs)</label>
+                <input id="costoBob" type="number" step="0.01" min="0" value="0.00" />
+              </div>
+            </div>
+            <div class="form-row">
+              <label>Observaciones o Recomendaciones al Cuidador</label>
+              <input id="notasAtencion" placeholder="Ej. No bañar a la mascota en 3 días. Control de temperatura." />
+            </div>
+            <div class="form-actions" style="margin-top:1.25rem">
+              <button class="btn btn-attention" type="submit" style="width:100%">Guardar Atención en Historial</button>
+            </div>
+          </form>
+        </div>
+      </div>
+      <div id="histMsg" style="margin-top:1rem"></div>
+    `;
+
+    let allPets = [];
+    let currentPetId = null;
+    let currentFilter = 'todos';
+    let currentHistorial = null;
+
+    function showMsg(text, ok = true) {
+      document.getElementById('histMsg').innerHTML = `<div class="alert ${ok ? 'ok' : 'error'}">${text}</div>`;
+      setTimeout(() => {
+        const el = document.getElementById('histMsg');
+        if (el) el.innerHTML = '';
+      }, 5000);
+    }
+
+    async function loadPets() {
+      const q = document.getElementById('qPet').value.trim();
+      allPets = await API.request('/api/pacientes' + (q ? `?q=${encodeURIComponent(q)}` : ''));
+      renderPetsList();
+    }
+
+    function renderPetsList() {
+      const container = document.getElementById('petsList');
+      if (allPets.length === 0) {
+        container.innerHTML = '<p class="muted">No se encontraron mascotas.</p>';
+        return;
+      }
+      container.innerHTML = allPets.map((p) => `
+        <div class="panel" data-pet-id="${p.id}" style="margin-bottom:0.6rem;cursor:pointer;border-left:4px solid ${currentPetId === p.id ? 'var(--brand)' : 'transparent'};background:${currentPetId === p.id ? '#f0fdf4' : '#fff'};padding:0.75rem">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <strong style="font-size:1.05rem;color:var(--brand-dark)">${p.nombre}</strong>
+            <span class="badge ${p.especie.toLowerCase().includes('can') ? 'ok' : 'warn'}">${p.especie}</span>
+          </div>
+          <div class="muted" style="font-size:0.85rem;margin-top:0.2rem">
+            Tutor: <strong>${p.propietario || '—'}</strong>
+          </div>
+          <div class="muted" style="font-size:0.8rem">
+            ${p.raza || 'Sin raza'} · ${p.edad_aprox ? p.edad_aprox : 'Edad no reg.'} · ${p.peso_kg ? p.peso_kg + ' kg' : 'S/peso'}
+          </div>
+        </div>
+      `).join('');
+
+      container.querySelectorAll('[data-pet-id]').forEach((card) => {
+        card.onclick = () => selectPet(Number(card.dataset.petId));
+      });
+    }
+
+    async function selectPet(petId) {
+      currentPetId = petId;
+      renderPetsList();
+      document.getElementById('emptyPrompt').style.display = 'none';
+      const recordEl = document.getElementById('petRecord');
+      recordEl.style.display = 'block';
+      recordEl.innerHTML = '<p class="muted">Cargando expediente clínico…</p>';
+
+      try {
+        currentHistorial = await API.request(`/api/pacientes/${petId}/historial`);
+        renderHistorial();
+      } catch (err) {
+        recordEl.innerHTML = `<div class="alert error">${err.message}</div>`;
+      }
+    }
+
+    function renderHistorial() {
+      if (!currentHistorial) return;
+      const { paciente, atenciones } = currentHistorial;
+      const recordEl = document.getElementById('petRecord');
+
+      const filteredAtenciones = atenciones.filter((a) => {
+        if (currentFilter === 'todos') return true;
+        return a.tipo_atencion === currentFilter;
+      });
+
+      recordEl.innerHTML = `
+        <div class="profile-card">
+          <div class="profile-header">
+            <div>
+              <h1 style="margin:0 0 0.25rem;font-size:1.6rem;color:var(--brand-dark)">${paciente.nombre}</h1>
+              <div class="profile-badges">
+                <span class="chip">🐾 <strong>Especie:</strong> ${paciente.especie}</span>
+                <span class="chip">🧬 <strong>Raza:</strong> ${paciente.raza || 'Mestizo'}</span>
+                <span class="chip">🎂 <strong>Edad:</strong> ${paciente.edad_aprox || 'No registrada'}</span>
+                <span class="chip">⚖️ <strong>Peso Actual:</strong> ${paciente.peso_kg ? paciente.peso_kg + ' kg' : '—'}</span>
+                <span class="chip">⚧ <strong>Sexo:</strong> ${paciente.sexo || 'Desconocido'}</span>
+              </div>
+            </div>
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+              <button class="btn btn-attention" id="btnNuevaAtencion">➕ Registrar Atención</button>
+            </div>
+          </div>
+          <hr style="border:none;border-top:1px solid #bbf7d0;margin:0.85rem 0" />
+          <div style="font-size:0.88rem;color:#1e3a2b;display:flex;gap:1.5rem;flex-wrap:wrap">
+            <div><strong>Cuidador:</strong> ${paciente.propietario || '—'}</div>
+            <div><strong>Teléfono:</strong> ${paciente.propietario_telefono || '—'}</div>
+            <div><strong>C.I.:</strong> ${paciente.propietario_ci || '—'}</div>
+            <div><strong>Dirección:</strong> ${paciente.propietario_direccion || '—'}</div>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.75rem">
+          <h2 style="margin:0">Expediente Clínico e Intervenciones</h2>
+          <div style="display:flex;gap:0.35rem;flex-wrap:wrap">
+            <button class="btn ${currentFilter === 'todos' ? '' : 'secondary'}" data-filter="todos" style="padding:0.35rem 0.65rem;font-size:0.82rem">Todos (${atenciones.length})</button>
+            <button class="btn ${currentFilter === 'vacunacion' ? '' : 'secondary'}" data-filter="vacunacion" style="padding:0.35rem 0.65rem;font-size:0.82rem">Vacunación</button>
+            <button class="btn ${currentFilter === 'desparasitacion' ? '' : 'secondary'}" data-filter="desparasitacion" style="padding:0.35rem 0.65rem;font-size:0.82rem">Desparasitación</button>
+            <button class="btn ${currentFilter === 'esterilizacion' ? '' : 'secondary'}" data-filter="esterilizacion" style="padding:0.35rem 0.65rem;font-size:0.82rem">Esterilización</button>
+            <button class="btn ${currentFilter === 'consulta' ? '' : 'secondary'}" data-filter="consulta" style="padding:0.35rem 0.65rem;font-size:0.82rem">Consultas</button>
+          </div>
+        </div>
+
+        <div class="timeline">
+          ${filteredAtenciones.length === 0 ? '<p class="muted" style="padding:1rem 0">No hay atenciones registradas bajo este filtro.</p>' : ''}
+          ${filteredAtenciones.map((a) => `
+            <div class="timeline-card ${a.tipo_atencion}">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;margin-bottom:0.5rem">
+                <div>
+                  <span class="tag-tipo tag-${a.tipo_atencion}">${a.tipo_atencion}</span>
+                  <strong style="margin-left:0.5rem;font-size:1.05rem">${a.motivo_diagnostico || 'Atención Veterinaria'}</strong>
+                </div>
+                <div class="muted" style="font-size:0.85rem;white-space:nowrap">
+                  📅 ${fmtDateTime(a.fecha_hora)}
+                </div>
+              </div>
+
+              <div style="margin:0.5rem 0;line-height:1.5">
+                <strong>Procedimiento / Medicación:</strong>
+                <p style="margin:0.25rem 0;color:#222">${a.tratamiento_procedimiento || '—'}</p>
+              </div>
+
+              <div style="display:flex;gap:1.5rem;flex-wrap:wrap;font-size:0.85rem;margin-top:0.6rem;padding-top:0.6rem;border-top:1px dashed var(--line)">
+                <div><strong>Veterinario:</strong> ${a.veterinario_nombre || 'Clínica Patitas al poder'}</div>
+                ${a.peso_actual_kg ? `<div><strong>Peso registrado:</strong> ${a.peso_actual_kg} kg</div>` : ''}
+                ${a.costo_bob > 0 ? `<div><strong>Costo:</strong> Bs ${Number(a.costo_bob).toFixed(2)}</div>` : ''}
+                ${a.proxima_cita ? `<div style="color:#0f7a45"><strong>🔔 Próximo control / dosis:</strong> ${a.proxima_cita}</div>` : ''}
+              </div>
+              ${a.notas ? `<div class="muted" style="font-size:0.82rem;margin-top:0.4rem"><em>Nota: ${a.notas}</em></div>` : ''}
+            </div>
+          `).join('')}
+        </div>
+      `;
+
+      document.getElementById('btnNuevaAtencion').onclick = openModalAtencion;
+      recordEl.querySelectorAll('[data-filter]').forEach((btn) => {
+        btn.onclick = () => {
+          currentFilter = btn.dataset.filter;
+          renderHistorial();
+        };
+      });
+    }
+
+    function openModalAtencion() {
+      if (!currentHistorial) return;
+      const { paciente } = currentHistorial;
+      document.getElementById('modalAtencionTitle').textContent = `Nueva Atención: ${paciente.nombre}`;
+      const now = new Date();
+      now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+      document.getElementById('fechaHora').value = now.toISOString().slice(0, 16);
+      document.getElementById('pesoActual').value = paciente.peso_kg || '';
+      document.getElementById('motivoDiagnostico').value = '';
+      document.getElementById('tratamientoProcedimiento').value = '';
+      document.getElementById('proximaCita').value = '';
+      document.getElementById('costoBob').value = '0.00';
+      document.getElementById('notasAtencion').value = '';
+      document.getElementById('modalAtencion').style.display = 'grid';
+    }
+
+    document.getElementById('closeModal').onclick = () => {
+      document.getElementById('modalAtencion').style.display = 'none';
+    };
+
+    document.getElementById('formAtencion').onsubmit = async (e) => {
+      e.preventDefault();
+      if (!currentPetId) return;
+
+      const body = {
+        tipo_atencion: document.getElementById('tipoAtencion').value,
+        fecha_hora: document.getElementById('fechaHora').value.replace('T', ' ') + ':00',
+        peso_actual_kg: document.getElementById('pesoActual').value ? Number(document.getElementById('pesoActual').value) : null,
+        motivo_diagnostico: document.getElementById('motivoDiagnostico').value.trim(),
+        tratamiento_procedimiento: document.getElementById('tratamientoProcedimiento').value.trim(),
+        proxima_cita: document.getElementById('proximaCita').value || null,
+        costo_bob: Number(document.getElementById('costoBob').value || 0),
+        notas: document.getElementById('notasAtencion').value.trim() || null,
+      };
+
+      try {
+        await API.request(`/api/pacientes/${currentPetId}/atenciones`, {
+          method: 'POST',
+          body,
+        });
+        document.getElementById('modalAtencion').style.display = 'none';
+        showMsg('Atención registrada exitosamente en el historial clínico');
+        // Recargar datos y lista
+        await selectPet(currentPetId);
+        await loadPets();
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    };
+
+    document.getElementById('qPet').addEventListener('input', () => loadPets().catch(console.error));
+
+    // Revisar si viene paciente_id en la URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialPetId = urlParams.get('paciente_id');
+
+    loadPets().then(() => {
+      if (initialPetId) {
+        selectPet(Number(initialPetId));
+      } else if (allPets.length > 0) {
+        selectPet(allPets[0].id);
+      }
+    }).catch(console.error);
+  </script>
+</body>
+</html>

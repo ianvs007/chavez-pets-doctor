@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Campañas Veterinarias · Patitas al poder</title>
+  <link rel="icon" type="image/jpeg" href="/img/logo.jpg" />
+  <link rel="stylesheet" href="/css/app.css" />
+  <style>
+    .campana-card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 1rem;
+      border-top: 4px solid var(--brand);
+    }
+    .campana-card.activa { border-top-color: #0f7a45; }
+    .campana-card.planificada { border-top-color: #c47a2c; }
+    .campana-card.finalizada { border-top-color: #64748b; opacity: 0.85; }
+
+    .tag-badge {
+      display: inline-block;
+      padding: 0.2rem 0.55rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .cupo-meter {
+      height: 8px;
+      background: #e2e8f0;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 0.35rem;
+    }
+    .cupo-fill {
+      height: 100%;
+      background: var(--brand);
+      transition: width 0.3s ease;
+    }
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 999;
+      display: grid;
+      place-items: center;
+      padding: 1rem;
+    }
+    .modal-box {
+      background: #fff;
+      max-width: 650px;
+      width: 100%;
+      border-radius: 16px;
+      padding: 1.5rem;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+    }
+  </style>
+</head>
+<body>
+  <script src="/js/api.js"></script>
+  <script>
+    renderShell({ title: 'Campañas y Jornadas Veterinarias', active: 'campanas' });
+    const page = document.getElementById('page');
+
+    page.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;margin-bottom:1.25rem">
+        <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap">
+          <input id="qCampana" placeholder="Buscar campañas..." style="width:240px" />
+          <select id="filtroEstado" style="width:160px">
+            <option value="todas">Todos los estados</option>
+            <option value="activa" selected>Activas</option>
+            <option value="planificada">Planificadas</option>
+            <option value="finalizada">Finalizadas</option>
+          </select>
+        </div>
+        <button class="btn" id="btnNuevaCampana">📢 Publicar Nueva Campaña</button>
+      </div>
+
+      <div id="gridCampanas" class="grid grid-2" style="align-items:start">
+        <p class="muted">Cargando campañas…</p>
+      </div>
+
+      <!-- Modal para Crear / Editar Campaña -->
+      <div id="modalCampana" class="modal-backdrop" style="display:none">
+        <div class="modal-box">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+            <h2 id="modalCampanaTitle" style="margin:0">Publicar Actividad / Campaña</h2>
+            <button type="button" class="btn secondary" id="closeCampanaModal" style="padding:0.3rem 0.6rem;min-height:auto">&times;</button>
+          </div>
+          <form id="formCampana">
+            <input type="hidden" id="campanaId" />
+            <div class="form-row">
+              <label>Título de la Campaña *</label>
+              <input id="cTitulo" required placeholder="Ej. Campaña de Vacunación Antirrábica para Perros y Gatos" />
+            </div>
+            <div class="grid grid-2" style="gap:0.75rem">
+              <div class="form-row">
+                <label>Tipo de Actividad *</label>
+                <select id="cTipo" required>
+                  <option value="vacunacion">💉 Vacunación</option>
+                  <option value="desparasitacion">💊 Desparasitación</option>
+                  <option value="esterilizacion">✂️ Esterilización masiva</option>
+                  <option value="consulta_general">🩺 Consulta / Chequeo general</option>
+                  <option value="otro">🐾 Otra actividad</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <label>Especie Objetivo *</label>
+                <select id="cEspecie">
+                  <option value="todos">Todos (Caninos y Felinos)</option>
+                  <option value="canino">Solo Caninos (Perros)</option>
+                  <option value="felino">Solo Felinos (Gatos)</option>
+                </select>
+              </div>
+            </div>
+            <div class="grid grid-2" style="gap:0.75rem">
+              <div class="form-row">
+                <label>Fecha de Inicio *</label>
+                <input id="cFechaInicio" type="date" required />
+              </div>
+              <div class="form-row">
+                <label>Fecha de Finalización *</label>
+                <input id="cFechaFin" type="date" required />
+              </div>
+            </div>
+            <div class="form-row">
+              <label>Lugar / Puesto de Atención *</label>
+              <input id="cLugar" required placeholder="Ej. Clínica Patitas al poder / Plaza Principal" />
+            </div>
+            <div class="grid grid-3" style="gap:0.75rem">
+              <div class="form-row">
+                <label>Cupo Máximo (0 = libre)</label>
+                <input id="cCupo" type="number" min="0" value="0" />
+              </div>
+              <div class="form-row">
+                <label>Costo (Bs, 0 = Gratis)</label>
+                <input id="cCosto" type="number" step="0.01" min="0" value="0.00" />
+              </div>
+              <div class="form-row">
+                <label>Estado</label>
+                <select id="cEstado">
+                  <option value="activa">Activa</option>
+                  <option value="planificada">Planificada</option>
+                  <option value="finalizada">Finalizada</option>
+                  <option value="cancelada">Cancelada</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <label>Descripción / Instrucciones al Cuidador</label>
+              <textarea id="cDescripcion" rows="3" placeholder="Ej. Traer a las mascotas con correa o transportadora. Se atenderá por orden de llegada."></textarea>
+            </div>
+            <div class="form-actions" style="margin-top:1.25rem">
+              <button class="btn" type="submit" style="width:100%" id="btnGuardarCampana">Publicar Campaña</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Modal para Participantes e Inscripción -->
+      <div id="modalParticipantes" class="modal-backdrop" style="display:none">
+        <div class="modal-box" style="max-width:750px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+            <div>
+              <h2 id="partCampanaTitle" style="margin:0">Mascotas Inscritas</h2>
+              <div id="partCampanaSub" class="muted" style="font-size:0.85rem"></div>
+            </div>
+            <button type="button" class="btn secondary" id="closePartModal" style="padding:0.3rem 0.6rem;min-height:auto">&times;</button>
+          </div>
+
+          <!-- Formulario rápido de inscripción -->
+          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:1rem;margin-bottom:1.25rem">
+            <h3 style="margin:0 0 0.5rem;font-size:0.95rem">Inscribir mascota a la campaña</h3>
+            <form id="formInscribir">
+              <div class="grid grid-2" style="gap:0.5rem">
+                <div class="form-row" style="margin:0">
+                  <label>Nombre del Cuidador / Tutor *</label>
+                  <input id="inTutor" required placeholder="Ej. Carlos Mamani" />
+                </div>
+                <div class="form-row" style="margin:0">
+                  <label>Teléfono de Contacto</label>
+                  <input id="inTelefono" placeholder="Ej. 70999888" />
+                </div>
+              </div>
+              <div class="grid grid-3" style="gap:0.5rem;margin-top:0.5rem">
+                <div class="form-row" style="margin:0">
+                  <label>Nombre de la Mascota *</label>
+                  <input id="inMascota" required placeholder="Ej. Rocky" />
+                </div>
+                <div class="form-row" style="margin:0">
+                  <label>Especie</label>
+                  <select id="inEspecie">
+                    <option value="Canino">Canino (Perro)</option>
+                    <option value="Felino">Felino (Gato)</option>
+                    <option value="Otro">Otro</option>
+                  </select>
+                </div>
+                <div class="form-row" style="margin:0">
+                  <label>Observación (opcional)</label>
+                  <input id="inObs" placeholder="Ej. Alérgico a penicilina" />
+                </div>
+              </div>
+              <button class="btn" type="submit" style="margin-top:0.75rem;padding:0.5rem 1rem">Registrar Inscripción</button>
+            </form>
+          </div>
+
+          <!-- Listado de inscritos y asistencia -->
+          <div id="listaParticipantesContainer">
+            <p class="muted">Cargando lista de inscritos…</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="campMsg" style="margin-top:1rem"></div>
+    `;
+
+    let campanasList = [];
+    let currentCampanaId = null;
+
+    function showMsg(text, ok = true) {
+      document.getElementById('campMsg').innerHTML = `<div class="alert ${ok ? 'ok' : 'error'}">${text}</div>`;
+      setTimeout(() => {
+        const el = document.getElementById('campMsg');
+        if (el) el.innerHTML = '';
+      }, 5000);
+    }
+
+    async function loadCampanas() {
+      const q = document.getElementById('qCampana').value.trim();
+      const estado = document.getElementById('filtroEstado').value;
+      const params = new URLSearchParams();
+      if (q) params.set('q', q);
+      if (estado) params.set('estado', estado);
+
+      campanasList = await API.request('/api/campanas?' + params.toString());
+      renderCampanas();
+    }
+
+    function renderCampanas() {
+      const grid = document.getElementById('gridCampanas');
+      if (campanasList.length === 0) {
+        grid.innerHTML = '<div class="panel" style="grid-column:1/-1;text-align:center;padding:2rem"><p class="muted">No se encontraron campañas con los filtros seleccionados.</p></div>';
+        return;
+      }
+
+      grid.innerHTML = campanasList.map((c) => {
+        const cupo = Number(c.cupo_maximo) || 0;
+        const inscritos = Number(c.total_inscritos) || 0;
+        const asistieron = Number(c.total_asistieron) || 0;
+        const pct = cupo > 0 ? Math.min(100, Math.round((inscritos / cupo) * 100)) : 0;
+        const costo = Number(c.costo_bob) || 0;
+
+        return `
+          <div class="campana-card ${c.estado}">
+            <div>
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:0.75rem;margin-bottom:0.4rem">
+                <span class="badge ${c.estado === 'activa' ? 'ok' : c.estado === 'planificada' ? 'warn' : ''}">${c.estado.toUpperCase()}</span>
+                <span style="font-size:0.85rem;font-weight:700;color:${costo === 0 ? 'var(--ok)' : 'var(--ink)'}">
+                  ${costo === 0 ? '🎁 GRATUITA' : `Bs ${costo.toFixed(2)}`}
+                </span>
+              </div>
+              <h2 style="margin:0 0 0.4rem;font-size:1.25rem;color:var(--brand-dark)">${c.titulo}</h2>
+              <div class="muted" style="font-size:0.85rem;margin-bottom:0.75rem">
+                🎯 <strong>Especie:</strong> ${c.especie_objetivo} · <strong>Tipo:</strong> ${c.tipo}
+              </div>
+              <p style="margin:0 0 0.85rem;font-size:0.92rem;line-height:1.45;color:#333">${c.descripcion || 'Sin descripción adicional.'}</p>
+              <div style="font-size:0.85rem;display:flex;flex-direction:column;gap:0.25rem;color:#475569">
+                <div>📅 <strong>Fechas:</strong> ${c.fecha_inicio} al ${c.fecha_fin}</div>
+                <div>📍 <strong>Lugar:</strong> ${c.lugar || 'Clínica Patitas al poder'}</div>
+              </div>
+
+              <div style="margin-top:0.85rem;padding-top:0.75rem;border-top:1px solid #e2e8f0">
+                <div style="display:flex;justify-content:space-between;font-size:0.82rem;font-weight:600">
+                  <span>Inscritos: ${inscritos} ${cupo > 0 ? `/ ${cupo} cupos` : ''}</span>
+                  <span style="color:var(--ok)">Asistieron: ${asistieron}</span>
+                </div>
+                ${cupo > 0 ? `
+                  <div class="cupo-meter">
+                    <div class="cupo-fill" style="width:${pct}%;background:${pct >= 100 ? 'var(--danger)' : 'var(--brand)'}"></div>
+                  </div>` : ''}
+              </div>
+            </div>
+
+            <div class="form-actions" style="margin-top:0.5rem">
+              <button class="btn" data-part="${c.id}" style="flex:1">📋 Inscritos y Asistencia (${inscritos})</button>
+              <button class="btn secondary" data-edit-camp="${c.id}">Editar</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      grid.querySelectorAll('[data-part]').forEach((btn) => {
+        btn.onclick = () => openModalParticipantes(Number(btn.dataset.part));
+      });
+
+      grid.querySelectorAll('[data-edit-camp]').forEach((btn) => {
+        btn.onclick = () => openModalCampana(Number(btn.dataset.editCamp));
+      });
+    }
+
+    function openModalCampana(campanaId = null) {
+      const form = document.getElementById('formCampana');
+      form.reset();
+      document.getElementById('campanaId').value = '';
+
+      if (campanaId) {
+        const c = campanasList.find((x) => x.id === campanaId);
+        if (!c) return;
+        document.getElementById('campanaId').value = c.id;
+        document.getElementById('cTitulo').value = c.titulo;
+        document.getElementById('cTipo').value = c.tipo;
+        document.getElementById('cEspecie').value = c.especie_objetivo;
+        document.getElementById('cFechaInicio').value = c.fecha_inicio ? c.fecha_inicio.slice(0, 10) : '';
+        document.getElementById('cFechaFin').value = c.fecha_fin ? c.fecha_fin.slice(0, 10) : '';
+        document.getElementById('cLugar').value = c.lugar || '';
+        document.getElementById('cCupo').value = c.cupo_maximo || 0;
+        document.getElementById('cCosto').value = Number(c.costo_bob || 0).toFixed(2);
+        document.getElementById('cEstado').value = c.estado;
+        document.getElementById('cDescripcion').value = c.descripcion || '';
+        document.getElementById('modalCampanaTitle').textContent = 'Editar Campaña';
+        document.getElementById('btnGuardarCampana').textContent = 'Guardar Cambios';
+      } else {
+        const today = new Date().toISOString().slice(0, 10);
+        document.getElementById('cFechaInicio').value = today;
+        document.getElementById('cFechaFin').value = today;
+        document.getElementById('modalCampanaTitle').textContent = 'Publicar Actividad / Campaña';
+        document.getElementById('btnGuardarCampana').textContent = 'Publicar Campaña';
+      }
+      document.getElementById('modalCampana').style.display = 'grid';
+    }
+
+    document.getElementById('btnNuevaCampana').onclick = () => openModalCampana(null);
+    document.getElementById('closeCampanaModal').onclick = () => {
+      document.getElementById('modalCampana').style.display = 'none';
+    };
+
+    document.getElementById('formCampana').onsubmit = async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('campanaId').value;
+      const body = {
+        titulo: document.getElementById('cTitulo').value.trim(),
+        tipo: document.getElementById('cTipo').value,
+        especie_objetivo: document.getElementById('cEspecie').value,
+        fecha_inicio: document.getElementById('cFechaInicio').value,
+        fecha_fin: document.getElementById('cFechaFin').value,
+        lugar: document.getElementById('cLugar').value.trim(),
+        cupo_maximo: Number(document.getElementById('cCupo').value || 0),
+        costo_bob: Number(document.getElementById('cCosto').value || 0),
+        estado: document.getElementById('cEstado').value,
+        descripcion: document.getElementById('cDescripcion').value.trim(),
+      };
+
+      try {
+        if (id) {
+          await API.request(`/api/campanas/${id}`, { method: 'PUT', body });
+          showMsg('Campaña actualizada exitosamente');
+        } else {
+          await API.request('/api/campanas', { method: 'POST', body });
+          showMsg('Campaña publicada exitosamente');
+        }
+        document.getElementById('modalCampana').style.display = 'none';
+        await loadCampanas();
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    };
+
+    async function openModalParticipantes(campanaId) {
+      currentCampanaId = campanaId;
+      const c = campanasList.find((x) => x.id === campanaId);
+      if (!c) return;
+
+      document.getElementById('partCampanaTitle').textContent = c.titulo;
+      document.getElementById('partCampanaSub').textContent = `📅 ${c.fecha_inicio} al ${c.fecha_fin} · 📍 ${c.lugar || 'Clínica'}`;
+      document.getElementById('modalParticipantes').style.display = 'grid';
+      await loadParticipantes();
+    }
+
+    document.getElementById('closePartModal').onclick = () => {
+      document.getElementById('modalParticipantes').style.display = 'none';
+    };
+
+    async function loadParticipantes() {
+      if (!currentCampanaId) return;
+      const container = document.getElementById('listaParticipantesContainer');
+      container.innerHTML = '<p class="muted">Cargando...</p>';
+
+      try {
+        const parts = await API.request(`/api/campanas/${currentCampanaId}/participantes`);
+        if (parts.length === 0) {
+          container.innerHTML = '<p class="muted" style="padding:1rem 0;text-align:center">No hay mascotas inscritas aún. ¡Inscribe una arriba!</p>';
+          return;
+        }
+
+        container.innerHTML = `
+          <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Mascota</th>
+                <th>Tutor / Teléfono</th>
+                <th>Observaciones</th>
+                <th>Asistencia</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              ${parts.map((p) => `
+                <tr>
+                  <td><strong>${p.mascota_nombre}</strong><div class="muted">${p.especie}</div></td>
+                  <td>${p.tutor_nombre}<div class="muted">${p.tutor_telefono || '—'}</div></td>
+                  <td>${p.observaciones || '—'}</td>
+                  <td>
+                    <button class="btn ${p.asistio ? 'ok' : 'secondary'}" data-toggle-asist="${p.id}" data-current="${p.asistio}" style="padding:0.35rem 0.65rem;font-size:0.8rem">
+                      ${p.asistio ? '✅ Asistió' : '⏳ Pendiente'}
+                    </button>
+                  </td>
+                  <td>
+                    <button class="btn secondary" data-del-part="${p.id}" style="padding:0.3rem 0.5rem;font-size:0.75rem;color:var(--danger)">Quitar</button>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          </div>
+        `;
+
+        container.querySelectorAll('[data-toggle-asist]').forEach((btn) => {
+          btn.onclick = async () => {
+            const partId = btn.dataset.toggleAsist;
+            const current = btn.dataset.current === '1';
+            await API.request(`/api/campanas/${currentCampanaId}/participantes/${partId}`, {
+              method: 'PATCH',
+              body: { asistio: !current },
+            });
+            await loadParticipantes();
+            await loadCampanas();
+          };
+        });
+
+        container.querySelectorAll('[data-del-part]').forEach((btn) => {
+          btn.onclick = async () => {
+            if (!confirm('¿Desea quitar esta mascota de la campaña?')) return;
+            const partId = btn.dataset.delPart;
+            await API.request(`/api/campanas/${currentCampanaId}/participantes/${partId}`, {
+              method: 'DELETE',
+            });
+            await loadParticipantes();
+            await loadCampanas();
+          };
+        });
+      } catch (err) {
+        container.innerHTML = `<div class="alert error">${err.message}</div>`;
+      }
+    }
+
+    document.getElementById('formInscribir').onsubmit = async (e) => {
+      e.preventDefault();
+      if (!currentCampanaId) return;
+
+      const body = {
+        tutor_nombre: document.getElementById('inTutor').value.trim(),
+        tutor_telefono: document.getElementById('inTelefono').value.trim(),
+        mascota_nombre: document.getElementById('inMascota').value.trim(),
+        especie: document.getElementById('inEspecie').value,
+        observaciones: document.getElementById('inObs').value.trim() || null,
+      };
+
+      try {
+        await API.request(`/api/campanas/${currentCampanaId}/participantes`, {
+          method: 'POST',
+          body,
+        });
+        document.getElementById('formInscribir').reset();
+        await loadParticipantes();
+        await loadCampanas();
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    };
+
+    document.getElementById('qCampana').addEventListener('input', () => loadCampanas().catch(console.error));
+    document.getElementById('filtroEstado').addEventListener('change', () => loadCampanas().catch(console.error));
+
+    loadCampanas().catch(console.error);
+  </script>
+</body>
+</html>

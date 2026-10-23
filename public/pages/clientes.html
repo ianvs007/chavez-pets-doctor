@@ -3,67 +3,113 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Clientes · Patitas al poder</title>
+  <title>Clientes y Pacientes · Patitas al poder</title>
+  <link rel="icon" type="image/jpeg" href="/img/logo.jpg" />
   <link rel="stylesheet" href="/css/app.css" />
 </head>
 <body>
   <script src="/js/api.js"></script>
   <script>
-    renderShell({ title: 'Clientes y pacientes', active: 'clientes' });
+    renderShell({ title: 'Registro de Mascotas y Cuidadores', active: 'clientes' });
     const page = document.getElementById('page');
 
     page.innerHTML = `
       <div class="grid grid-2">
         <div class="panel">
-          <h2>Propietarios</h2>
-          <div class="form-row"><input id="qCliente" placeholder="Buscar nombre, CI o teléfono" /></div>
+          <h2>Cuidadores / Propietarios</h2>
+          <div class="form-row"><input id="qCliente" placeholder="Buscar por nombre, CI o teléfono..." /></div>
           <div id="listaClientes"></div>
-          <hr style="border:none;border-top:1px solid var(--line);margin:1rem 0" />
-          <h2>Nuevo / editar cliente</h2>
+          <hr style="border:none;border-top:1px solid var(--line);margin:1.25rem 0" />
+          <h2 id="tituloFormCliente">Nuevo / editar cuidador</h2>
           <form id="formCliente">
             <input type="hidden" id="clienteId" />
-            <div class="form-row"><label>Nombres</label><input id="nombres" required /></div>
-            <div class="form-row"><label>Apellidos</label><input id="apellidos" required /></div>
-            <div class="form-row"><label>CI</label><input id="ci" /></div>
-            <div class="form-row"><label>Teléfono</label><input id="telefono" /></div>
-            <div class="form-row"><label>Email</label><input id="email" type="email" /></div>
-            <div class="form-row"><label>Dirección</label><input id="direccion" /></div>
+            <div class="form-row"><label>Nombres</label><input id="nombres" required placeholder="Ej. María" /></div>
+            <div class="form-row"><label>Apellidos</label><input id="apellidos" required placeholder="Ej. Rojas" /></div>
+            <div class="form-row"><label>C.I. / Documento</label><input id="ci" placeholder="Ej. 4567890 LP" /></div>
+            <div class="form-row"><label>Teléfono / Celular</label><input id="telefono" placeholder="Ej. 70111222" /></div>
+            <div class="form-row"><label>Correo Electrónico</label><input id="email" type="email" placeholder="correo@ejemplo.com" /></div>
+            <div class="form-row"><label>Dirección</label><input id="direccion" placeholder="Zona, Calle, Nro" /></div>
             <div class="form-actions">
-              <button class="btn" type="submit">Guardar</button>
+              <button class="btn" type="submit">Guardar Cuidador</button>
               <button class="btn secondary" type="button" id="resetCliente">Limpiar</button>
             </div>
           </form>
         </div>
+
         <div class="panel">
-          <h2>Pacientes</h2>
-          <div id="listaPacientes" class="muted">Seleccione un cliente</div>
-          <hr style="border:none;border-top:1px solid var(--line);margin:1rem 0" />
-          <h2>Nuevo paciente</h2>
+          <h2>Mascotas del cuidador</h2>
+          <div id="clienteSeleccionadoInfo" class="muted" style="margin-bottom:0.75rem">Selecciona un cuidador en la tabla izquierda</div>
+          <div id="listaPacientes"></div>
+          <hr style="border:none;border-top:1px solid var(--line);margin:1.25rem 0" />
+          <h2 id="tituloFormPaciente">Registrar nueva mascota</h2>
           <form id="formPaciente">
-            <div class="form-row"><label>Cliente</label><select id="pacienteCliente" required></select></div>
-            <div class="form-row"><label>Nombre</label><input id="pNombre" required /></div>
-            <div class="form-row"><label>Especie</label><input id="pEspecie" required placeholder="Canino / Felino" /></div>
-            <div class="form-row"><label>Raza</label><input id="pRaza" /></div>
-            <div class="form-row"><label>Sexo</label>
-              <select id="pSexo">
-                <option value="desconocido">desconocido</option>
-                <option value="macho">macho</option>
-                <option value="hembra">hembra</option>
-              </select>
+            <input type="hidden" id="pacienteId" />
+            <div class="form-row">
+              <label>Cuidador responsable</label>
+              <select id="pacienteCliente" required></select>
             </div>
-            <div class="form-row"><label>Peso (kg)</label><input id="pPeso" type="number" step="0.01" /></div>
-            <div class="form-actions"><button class="btn" type="submit">Guardar paciente</button></div>
+            <div class="form-row">
+              <label>Nombre de la mascota</label>
+              <input id="pNombre" required placeholder="Ej. Luna" />
+            </div>
+            <div class="grid grid-2" style="gap:0.75rem">
+              <div class="form-row">
+                <label>Especie</label>
+                <select id="pEspecie" required>
+                  <option value="Canino">Canino (Perro)</option>
+                  <option value="Felino">Felino (Gato)</option>
+                  <option value="Conejo">Conejo</option>
+                  <option value="Ave">Ave</option>
+                  <option value="Otro">Otro</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <label>Raza</label>
+                <input id="pRaza" placeholder="Ej. Mestiza / Siamés" />
+              </div>
+            </div>
+            <div class="grid grid-3" style="gap:0.75rem">
+              <div class="form-row">
+                <label>Sexo</label>
+                <select id="pSexo">
+                  <option value="macho">Macho</option>
+                  <option value="hembra">Hembra</option>
+                  <option value="desconocido">Desconocido</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <label>Edad aproximada</label>
+                <input id="pEdad" placeholder="Ej. 2 años / 6 meses" />
+              </div>
+              <div class="form-row">
+                <label>Peso (kg)</label>
+                <input id="pPeso" type="number" step="0.01" min="0" placeholder="Ej. 12.5" />
+              </div>
+            </div>
+            <div class="form-row">
+              <label>Color / señas particulares</label>
+              <input id="pColor" placeholder="Ej. Café con manchas blancas" />
+            </div>
+            <div class="form-actions">
+              <button class="btn" type="submit" id="btnGuardarPaciente">Guardar Mascota</button>
+              <button class="btn secondary" type="button" id="resetPaciente">Limpiar</button>
+            </div>
           </form>
         </div>
       </div>
-      <div id="msg"></div>
+      <div id="msg" style="margin-top:1rem"></div>
     `;
 
     let clientes = [];
-    let selectedClienteId = null;
+    let selectedCliente = null;
+    let pacientesCache = [];
 
     function showMsg(text, ok = true) {
       document.getElementById('msg').innerHTML = `<div class="alert ${ok ? 'ok' : 'error'}">${text}</div>`;
+      setTimeout(() => {
+        const el = document.getElementById('msg');
+        if (el) el.innerHTML = '';
+      }, 5000);
     }
 
     async function loadClientes() {
@@ -72,23 +118,28 @@
       document.getElementById('listaClientes').innerHTML = `
         <div class="table-scroll">
         <table>
-          <thead><tr><th>Nombre</th><th>Tel</th><th></th></tr></thead>
+          <thead><tr><th>Nombre</th><th>Teléfono</th><th>Acciones</th></tr></thead>
           <tbody>
             ${clientes.map((c) => `
-              <tr>
-                <td><strong>${c.nombres} ${c.apellidos}</strong><div class="muted">${c.ci || ''}</div></td>
+              <tr class="${selectedCliente && selectedCliente.id === c.id ? 'active' : ''}">
+                <td><strong>${c.nombres} ${c.apellidos}</strong><div class="muted">${c.ci ? 'CI: ' + c.ci : ''}</div></td>
                 <td>${c.telefono || '—'}</td>
                 <td>
-                  <button class="btn secondary" data-edit="${c.id}">Editar</button>
-                  <button class="btn" data-sel="${c.id}">Pacientes</button>
+                  <button class="btn secondary" data-edit="${c.id}" title="Editar cuidador">Editar</button>
+                  <button class="btn" data-sel="${c.id}" title="Ver mascotas">Mascotas</button>
                 </td>
-              </tr>`).join('') || '<tr><td colspan="3">Sin resultados</td></tr>'}
+              </tr>`).join('') || '<tr><td colspan="3">Sin cuidadores registrados</td></tr>'}
           </tbody>
         </table>
         </div>`;
+
       const sel = document.getElementById('pacienteCliente');
-      sel.innerHTML = clientes.map((c) => `<option value="${c.id}">${c.nombres} ${c.apellidos}</option>`).join('');
-      if (selectedClienteId) sel.value = selectedClienteId;
+      sel.innerHTML = '<option value="">-- Seleccionar cuidador --</option>' +
+        clientes.map((c) => `<option value="${c.id}">${c.nombres} ${c.apellidos} (${c.ci || 'S/CI'})</option>`).join('');
+
+      if (selectedCliente) {
+        sel.value = selectedCliente.id;
+      }
 
       document.querySelectorAll('[data-edit]').forEach((btn) => {
         btn.onclick = () => {
@@ -101,38 +152,82 @@
           document.getElementById('telefono').value = c.telefono || '';
           document.getElementById('email').value = c.email || '';
           document.getElementById('direccion').value = c.direccion || '';
+          document.getElementById('tituloFormCliente').textContent = `Editar cuidador: ${c.nombres} ${c.apellidos}`;
         };
       });
+
       document.querySelectorAll('[data-sel]').forEach((btn) => {
-        btn.onclick = () => loadPacientes(btn.dataset.sel);
+        btn.onclick = () => {
+          const c = clientes.find((x) => String(x.id) === btn.dataset.sel);
+          if (c) selectCliente(c);
+        };
       });
+    }
+
+    async function selectCliente(c) {
+      selectedCliente = c;
+      document.getElementById('pacienteCliente').value = c.id;
+      document.getElementById('clienteSeleccionadoInfo').innerHTML = `
+        <strong>Cuidador:</strong> ${c.nombres} ${c.apellidos} · <strong>Tel:</strong> ${c.telefono || '—'} · <strong>Dir:</strong> ${c.direccion || '—'}
+      `;
+      await loadPacientes(c.id);
     }
 
     async function loadPacientes(clienteId) {
-      selectedClienteId = clienteId;
-      document.getElementById('pacienteCliente').value = clienteId;
-      const rows = await API.request(`/api/pacientes?cliente_id=${clienteId}`);
+      pacientesCache = await API.request(`/api/pacientes?cliente_id=${clienteId}`);
       document.getElementById('listaPacientes').innerHTML = `
         <div class="table-scroll">
         <table>
-          <thead><tr><th>Nombre</th><th>Especie</th><th>Sexo</th><th>Peso</th></tr></thead>
+          <thead><tr><th>Nombre</th><th>Especie / Raza</th><th>Edad</th><th>Peso</th><th>Acciones</th></tr></thead>
           <tbody>
-            ${rows.map((p) => `
+            ${pacientesCache.map((p) => `
               <tr>
-                <td>${p.nombre}</td>
+                <td><strong>${p.nombre}</strong><div class="muted">${p.sexo}</div></td>
                 <td>${p.especie}${p.raza ? ` · ${p.raza}` : ''}</td>
-                <td>${p.sexo}</td>
-                <td>${p.peso_kg ?? '—'}</td>
-              </tr>`).join('') || '<tr><td colspan="4">Sin pacientes</td></tr>'}
+                <td>${p.edad_aprox || '—'}</td>
+                <td>${p.peso_kg ? p.peso_kg + ' kg' : '—'}</td>
+                <td>
+                  <a class="btn secondary" href="/pages/historial.html?paciente_id=${p.id}" title="Ver historial clínico" style="display:inline-block;padding:0.4rem 0.6rem;font-size:0.8rem">Historial</a>
+                  <button class="btn secondary" data-edit-p="${p.id}" style="padding:0.4rem 0.6rem;font-size:0.8rem">Editar</button>
+                </td>
+              </tr>`).join('') || '<tr><td colspan="5">No tiene mascotas registradas</td></tr>'}
           </tbody>
         </table>
         </div>`;
+
+      document.querySelectorAll('[data-edit-p]').forEach((btn) => {
+        btn.onclick = () => {
+          const p = pacientesCache.find((x) => String(x.id) === btn.dataset.editP);
+          if (!p) return;
+          document.getElementById('pacienteId').value = p.id;
+          document.getElementById('pacienteCliente').value = p.cliente_id;
+          document.getElementById('pNombre').value = p.nombre;
+          document.getElementById('pEspecie').value = p.especie;
+          document.getElementById('pRaza').value = p.raza || '';
+          document.getElementById('pSexo').value = p.sexo || 'desconocido';
+          document.getElementById('pEdad').value = p.edad_aprox || '';
+          document.getElementById('pPeso').value = p.peso_kg || '';
+          document.getElementById('pColor').value = p.color || '';
+          document.getElementById('tituloFormPaciente').textContent = `Editar mascota: ${p.nombre}`;
+          document.getElementById('btnGuardarPaciente').textContent = 'Actualizar Mascota';
+        };
+      });
     }
 
     document.getElementById('qCliente').addEventListener('input', () => loadClientes().catch(console.error));
+
     document.getElementById('resetCliente').onclick = () => {
       document.getElementById('formCliente').reset();
       document.getElementById('clienteId').value = '';
+      document.getElementById('tituloFormCliente').textContent = 'Nuevo / editar cuidador';
+    };
+
+    document.getElementById('resetPaciente').onclick = () => {
+      document.getElementById('formPaciente').reset();
+      document.getElementById('pacienteId').value = '';
+      if (selectedCliente) document.getElementById('pacienteCliente').value = selectedCliente.id;
+      document.getElementById('tituloFormPaciente').textContent = 'Registrar nueva mascota';
+      document.getElementById('btnGuardarPaciente').textContent = 'Guardar Mascota';
     };
 
     document.getElementById('formCliente').onsubmit = async (e) => {
@@ -151,7 +246,8 @@
         else await API.request('/api/clientes', { method: 'POST', body });
         document.getElementById('formCliente').reset();
         document.getElementById('clienteId').value = '';
-        showMsg('Cliente guardado');
+        document.getElementById('tituloFormCliente').textContent = 'Nuevo / editar cuidador';
+        showMsg('Cuidador guardado exitosamente');
         await loadClientes();
       } catch (err) {
         showMsg(err.message, false);
@@ -160,28 +256,45 @@
 
     document.getElementById('formPaciente').onsubmit = async (e) => {
       e.preventDefault();
+      const pId = document.getElementById('pacienteId').value;
+      const clienteId = document.getElementById('pacienteCliente').value;
+      if (!clienteId) {
+        showMsg('Seleccione un cuidador responsable', false);
+        return;
+      }
+      const body = {
+        cliente_id: Number(clienteId),
+        nombre: document.getElementById('pNombre').value.trim(),
+        especie: document.getElementById('pEspecie').value.trim(),
+        raza: document.getElementById('pRaza').value.trim(),
+        sexo: document.getElementById('pSexo').value,
+        edad_aprox: document.getElementById('pEdad').value.trim(),
+        peso_kg: document.getElementById('pPeso').value || null,
+        color: document.getElementById('pColor').value.trim(),
+      };
       try {
-        await API.request('/api/pacientes', {
-          method: 'POST',
-          body: {
-            cliente_id: Number(document.getElementById('pacienteCliente').value),
-            nombre: document.getElementById('pNombre').value.trim(),
-            especie: document.getElementById('pEspecie').value.trim(),
-            raza: document.getElementById('pRaza').value.trim(),
-            sexo: document.getElementById('pSexo').value,
-            peso_kg: document.getElementById('pPeso').value || null,
-          },
-        });
+        if (pId) {
+          await API.request(`/api/pacientes/${pId}`, { method: 'PUT', body });
+          showMsg('Datos de la mascota actualizados exitosamente');
+        } else {
+          await API.request('/api/pacientes', { method: 'POST', body });
+          showMsg('Mascota registrada exitosamente');
+        }
         document.getElementById('formPaciente').reset();
-        showMsg('Paciente guardado');
-        await loadPacientes(selectedClienteId || document.getElementById('pacienteCliente').value);
-        await loadClientes();
+        document.getElementById('pacienteId').value = '';
+        document.getElementById('tituloFormPaciente').textContent = 'Registrar nueva mascota';
+        document.getElementById('btnGuardarPaciente').textContent = 'Guardar Mascota';
+        if (selectedCliente) {
+          await loadPacientes(selectedCliente.id);
+        }
       } catch (err) {
         showMsg(err.message, false);
       }
     };
 
-    loadClientes().catch((err) => showMsg(err.message, false));
+    loadClientes().then(() => {
+      if (clientes.length > 0) selectCliente(clientes[0]);
+    }).catch((err) => showMsg(err.message, false));
   </script>
 </body>
 </html>

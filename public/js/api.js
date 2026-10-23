@@ -82,10 +82,20 @@ function badgePago(estado) {
 
 function renderShell({ title, active }) {
   if (!API.requireAuth()) return;
+  if (!document.querySelector("link[rel*='icon']")) {
+    const favicon = document.createElement('link');
+    favicon.rel = 'icon';
+    favicon.type = 'image/jpeg';
+    favicon.href = '/img/logo.jpg';
+    document.head.appendChild(favicon);
+  }
+
   const user = API.getUser() || {};
   const links = [
     ['/pages/dashboard.html', 'Dashboard', 'dashboard'],
-    ['/pages/clientes.html', 'Clientes / Pacientes', 'clientes'],
+    ['/pages/clientes.html', 'Mascotas y Cuidadores', 'clientes'],
+    ['/pages/historial.html', 'Historial y Atenciones', 'historial'],
+    ['/pages/campanas.html', 'Campañas Veterinarias', 'campanas'],
     ['/pages/agenda.html', 'Agenda', 'agenda'],
     ['/pages/servicios.html', 'Servicios', 'servicios'],
     ['/pages/caja.html', 'Caja', 'caja'],
@@ -100,7 +110,10 @@ function renderShell({ title, active }) {
     <div class="app-shell">
       <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
-          <div class="brand">Patitas al poder<small>Veterinaria · Bolivia</small></div>
+          <div style="display:flex;align-items:center;gap:0.75rem;min-width:0;">
+            <img src="/img/logo.jpg" alt="Logo" style="width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,0.4);flex-shrink:0;" />
+            <div class="brand">Patitas al poder<small>Registro y control veterinario</small></div>
+          </div>
           <button type="button" class="nav-toggle" id="navToggle" aria-label="Abrir menú" aria-expanded="false" aria-controls="mainNav">
             <span class="nav-toggle-bars" aria-hidden="true"></span>
           </button>
@@ -123,7 +136,7 @@ function renderShell({ title, active }) {
         <div class="topbar">
           <div>
             <h1>${title}</h1>
-            <div class="muted">Primera entrega operativa</div>
+            <div class="muted">Patitas al poder · Atención veterinaria</div>
           </div>
         </div>
         <div id="page"></div>

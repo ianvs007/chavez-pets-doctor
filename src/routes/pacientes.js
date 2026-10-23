@@ -11,4 +11,8 @@ router.post('/', ...both, ctrl.create);
 router.put('/:id', ...both, ctrl.update);
 router.delete('/:id', ...both, ctrl.remove);
 
+router.get('/:id/historial', ...both, ctrl.getHistorial);
+router.get('/:id/atenciones', ...both, ctrl.listAtenciones);
+router.post('/:id/atenciones', ...both, ctrl.createAtencion);
+
 module.exports = router;

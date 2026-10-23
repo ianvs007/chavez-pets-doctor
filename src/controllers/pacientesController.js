@@ -51,4 +51,48 @@ async function remove(req, res, next) {
   }
 }
 
-module.exports = { list, get, create, update, remove };
+async function getHistorial(req, res, next) {
+  try {
+    const historial = await service.getHistorialCompleto(req.params.id);
+    return res.json(historial);
+  } catch (e) {
+    return next(e);
+  }
+}
+
+async function listAtenciones(req, res, next) {
+  try {
+    const atenciones = await service.getAtenciones(req.params.id);
+    return res.json(atenciones);
+  } catch (e) {
+    return next(e);
+  }
+}
+
+async function createAtencion(req, res, next) {
+  try {
+    const { tipo_atencion } = req.body || {};
+    if (!tipo_atencion) {
+      return res.status(400).json({ error: 'tipo_atencion es requerido' });
+    }
+    const atencion = await service.createAtencion(
+      req.params.id,
+      req.body,
+      req.user?.id
+    );
+    return res.status(201).json(atencion);
+  } catch (e) {
+    return next(e);
+  }
+}
+
+module.exports = {
+  list,
+  get,
+  create,
+  update,
+  remove,
+  getHistorial,
+  listAtenciones,
+  createAtencion,
+};
